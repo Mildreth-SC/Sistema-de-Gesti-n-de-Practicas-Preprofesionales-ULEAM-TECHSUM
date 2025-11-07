@@ -1,7 +1,7 @@
 {% extends 'inscripciones/base.html' %}
 {% load crispy_forms_tags %}
 
-{% block title %}Registro de Estudiante - Sistema de Prácticas{% endblock %}
+{% block title %}Registro - Sistema de Prácticas{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -10,19 +10,46 @@
             <div class="form-container">
                 <div class="form-header">
                     <h2>
-                        <i class="bi bi-person-plus-fill"></i> Registro de Estudiante
+                        Registro
                     </h2>
                     <p>Completa el formulario para crear tu cuenta y acceder a las prácticas pre profesionales</p>
                 </div>
                         
-                        <form method="post" enctype="multipart/form-data">
+                        <form method="post" enctype="multipart/form-data" id="registroForm">
                         {% csrf_token %}
+                        
+                        <!-- Tipo de Usuario -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col-12">
+                                <h5 class="title-uleam border-bottom pb-2 mb-3">
+                                    Tipo de Usuario
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-bold">¿Eres estudiante o egresado?</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="tipo_usuario" id="tipo_estudiante" value="estudiante" checked>
+                                    <label class="form-check-label" for="tipo_estudiante">
+                                        Estudiante Activo
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="tipo_usuario" id="tipo_egresado" value="egresado">
+                                    <label class="form-check-label" for="tipo_egresado">
+                                        Egresado
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                         
                         <!-- Información Personal -->
                         <div class="row mb-4 mt-4">
                             <div class="col-12">
                                 <h5 class="title-uleam border-bottom pb-2 mb-3">
-                                    <i class="bi bi-person-fill"></i> Información Personal
+                                    Información Personal
                                 </h5>
                             </div>
                         </div>
@@ -49,7 +76,7 @@
                         <div class="row mb-4 mt-4">
                             <div class="col-12">
                                 <h5 class="subtitle-uleam border-bottom pb-2 mb-3">
-                                    <i class="bi bi-mortarboard-fill"></i> Información Académica
+                                    Información Académica
                                 </h5>
                             </div>
                         </div>
@@ -63,9 +90,20 @@
                             </div>
                         </div>
                         
-                        <div class="row">
+                        <!-- Campo para ESTUDIANTES ACTIVOS -->
+                        <div class="row" id="campo_estudiante" style="display: block;">
                             <div class="col-md-6 mb-3">
                                 {{ form.ciclo_actual|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.foto|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <!-- Campo para EGRESADOS -->
+                        <div class="row" id="campo_egresado" style="display: none;">
+                            <div class="col-md-6 mb-3">
+                                {{ form.tipo_titulo|as_crispy_field }}
                             </div>
                             <div class="col-md-6 mb-3">
                                 {{ form.foto|as_crispy_field }}
@@ -76,7 +114,7 @@
                         <div class="row mb-4 mt-4">
                             <div class="col-12">
                                 <h5 class="title-uleam border-bottom pb-2 mb-3">
-                                    <i class="bi bi-telephone-fill"></i> Información de Contacto
+                                    Información de Contacto
                                 </h5>
                             </div>
                         </div>
@@ -100,7 +138,7 @@
                         <div class="row mb-4 mt-4">
                             <div class="col-12">
                                 <h5 class="subtitle-uleam border-bottom pb-2 mb-3">
-                                    <i class="bi bi-shield-lock-fill"></i> Seguridad
+                                    Seguridad
                                 </h5>
                             </div>
                         </div>
@@ -125,10 +163,10 @@
                         <!-- Botones -->
                         <div class="form-actions mt-4">
                             <button type="submit" class="btn-submit">
-                                <i class="bi bi-person-plus-fill"></i> Crear Cuenta
+                                Crear Cuenta
                             </button>
                             <a href="{% url 'login' %}" class="btn-cancel">
-                                <i class="bi bi-box-arrow-in-right"></i> Ya tengo cuenta
+                                Ya tengo cuenta
                             </a>
                         </div>
                     </form>
@@ -136,4 +174,92 @@
         </div>
     </div>
 </div>
+
+<script>
+// Mostrar/ocultar campos según tipo de usuario
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoEstudiante = document.getElementById('tipo_estudiante');
+    const tipoEgresado = document.getElementById('tipo_egresado');
+    const campoEstudiante = document.getElementById('campo_estudiante');
+    const campoEgresado = document.getElementById('campo_egresado');
+    
+    function toggleCampos() {
+        if (tipoEstudiante.checked) {
+            campoEstudiante.style.display = 'flex';
+            campoEgresado.style.display = 'none';
+            // Hacer ciclo_actual requerido
+            document.querySelector('input[name="ciclo_actual"]').required = true;
+            document.querySelector('select[name="tipo_titulo"]').required = false;
+        } else {
+            campoEstudiante.style.display = 'none';
+            campoEgresado.style.display = 'flex';
+            // Hacer tipo_titulo requerido
+            document.querySelector('input[name="ciclo_actual"]').required = false;
+            document.querySelector('select[name="tipo_titulo"]').required = true;
+        }
+    }
+    
+    // Ejecutar al cargar
+    toggleCampos();
+    
+    // Ejecutar al cambiar
+    tipoEstudiante.addEventListener('change', toggleCampos);
+    tipoEgresado.addEventListener('change', toggleCampos);
+    
+    // Agregar botones de mostrar/ocultar contraseña
+    const password1Input = document.querySelector('input[name="password1"]');
+    if (password1Input) {
+        addPasswordToggle(password1Input, 'password1');
+    }
+    
+    const password2Input = document.querySelector('input[name="password2"]');
+    if (password2Input) {
+        addPasswordToggle(password2Input, 'password2');
+    }
+});
+
+function addPasswordToggle(inputElement, inputId) {
+    // Crear wrapper
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    
+    // Envolver el input
+    inputElement.parentNode.insertBefore(wrapper, inputElement);
+    wrapper.appendChild(inputElement);
+    
+    // Agregar padding al input
+    inputElement.style.paddingRight = '45px';
+    
+    // Crear botón
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.onclick = function() { togglePassword(inputId); };
+    button.style.cssText = 'position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 5px;';
+    button.title = 'Mostrar/Ocultar contraseña';
+    
+    // Crear icono
+    const icon = document.createElement('i');
+    icon.className = 'bi bi-eye-fill';
+    icon.id = inputId + '-icon';
+    icon.style.cssText = 'font-size: 1.2rem; color: var(--uleam-blue);';
+    
+    button.appendChild(icon);
+    wrapper.appendChild(button);
+}
+
+function togglePassword(inputId) {
+    const passwordInput = document.querySelector('input[name="' + inputId + '"]');
+    const icon = document.getElementById(inputId + '-icon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('bi-eye-fill');
+        icon.classList.add('bi-eye-slash-fill');
+    } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('bi-eye-slash-fill');
+        icon.classList.add('bi-eye-fill');
+    }
+}
+</script>
 {% endblock %}

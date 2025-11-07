@@ -7,8 +7,9 @@ from django.db.models import Q
 from django.db import transaction
 from django.utils import timezone
 from django.http import JsonResponse
-from .models import Practica, Inscripcion, Estudiante, Empresa, Carrera, DocumentoInscripcion, Facultad, PracticaInterna, InscripcionInterna
+from .models import Practica, Inscripcion, Estudiante, Empresa, Carrera, DocumentoInscripcion, Facultad, PracticaInterna, InscripcionInterna, Notificacion
 from .decorators import estudiante_required
+from .supabase_auth import supabase_auth
 from .forms import (
     EstudianteRegistrationForm, EstudianteUpdateForm, EmpresaForm, 
     PracticaForm, InscripcionForm, DocumentoInscripcionForm, BusquedaPracticasForm,
@@ -34,8 +35,44 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
+            # Verificar si es empresa o facultad y si está pendiente de aprobación
+            if hasattr(user, 'empresa'):
+                empresa = user.empresa
+                if empresa.estado_aprobacion == 'pendiente':
+                    messages.warning(
+                        request,
+                        'Tu cuenta está PENDIENTE DE APROBACIÓN por el administrador. '
+                        'Recibirás una notificación por email cuando tu cuenta sea aprobada.'
+                    )
+                    return render(request, 'inscripciones/login.html')
+                elif empresa.estado_aprobacion == 'rechazada':
+                    messages.error(
+                        request,
+                        'Tu solicitud de registro ha sido RECHAZADA. '
+                        'Por favor, contacta al administrador para más información.'
+                    )
+                    return render(request, 'inscripciones/login.html')
+            
+            if hasattr(user, 'facultad'):
+                facultad = user.facultad
+                if facultad.estado_aprobacion == 'pendiente':
+                    messages.warning(
+                        request,
+                        'Tu cuenta está PENDIENTE DE APROBACIÓN por el administrador. '
+                        'Recibirás una notificación por email cuando tu cuenta sea aprobada.'
+                    )
+                    return render(request, 'inscripciones/login.html')
+                elif facultad.estado_aprobacion == 'rechazada':
+                    messages.error(
+                        request,
+                        'Tu solicitud de registro ha sido RECHAZADA. '
+                        'Por favor, contacta al administrador para más información.'
+                    )
+                    return render(request, 'inscripciones/login.html')
+            
+            # Si está aprobado o es estudiante, permitir login
             login(request, user)
-            messages.success(request, f'¡Bienvenido {user.get_full_name() or user.username}!')
+            messages.success(request, f'Bienvenido {user.get_full_name() or user.username}!')
             
             # Redirigir según el tipo de usuario
             if hasattr(user, 'empresa'):
@@ -58,6 +95,114 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'Has cerrado sesión correctamente. ¡Hasta pronto!')
     return redirect('home')
+
+
+def verificar_email(request, uidb64, token):
+    """Vista para verificar el email del usuario"""
+    user = supabase_auth.verify_email_token(uidb64, token)
+    
+    if user is not None:
+        # Activar la cuenta
+        user.is_active = True
+        user.save()
+        
+        messages.success(
+            request,
+            '✅ ¡Tu correo electrónico ha sido verificado exitosamente! '
+            'Ahora puedes iniciar sesión con tus credenciales.'
+        )
+        return redirect('login')
+    else:
+        messages.error(
+            request,
+            '❌ El enlace de verificación es inválido o ha expirado. '
+            'Por favor, solicita un nuevo enlace o contacta al administrador.'
+        )
+        return redirect('home')
+
+
+def solicitar_restablecimiento_contrasena(request):
+    """Vista para solicitar restablecimiento de contraseña"""
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        
+        if not email:
+            messages.error(request, 'Por favor, ingresa tu correo electrónico.')
+            return render(request, 'inscripciones/solicitar_reset_password.html')
+        
+        try:
+            from django.contrib.auth.models import User
+            user = User.objects.get(email=email)
+            
+            # Enviar email de recuperación
+            email_sent = supabase_auth.send_password_reset_email(user, request)
+            
+            if email_sent:
+                messages.success(
+                    request,
+                    '✅ Se ha enviado un correo electrónico con instrucciones para '
+                    'restablecer tu contraseña. Por favor, revisa tu bandeja de entrada.'
+                )
+            else:
+                messages.error(
+                    request,
+                    '❌ Hubo un error al enviar el correo. Por favor, intenta nuevamente.'
+                )
+            
+            return redirect('login')
+            
+        except User.DoesNotExist:
+            # Por seguridad, mostramos el mismo mensaje aunque el email no exista
+            messages.success(
+                request,
+                '✅ Si el correo electrónico existe en nuestro sistema, '
+                'recibirás instrucciones para restablecer tu contraseña.'
+            )
+            return redirect('login')
+    
+    return render(request, 'inscripciones/solicitar_reset_password.html')
+
+
+def restablecer_contrasena(request, uidb64, token):
+    """Vista para restablecer la contraseña con token"""
+    user = supabase_auth.verify_email_token(uidb64, token)
+    
+    if user is None:
+        messages.error(
+            request,
+            '❌ El enlace de restablecimiento es inválido o ha expirado. '
+            'Por favor, solicita un nuevo enlace.'
+        )
+        return redirect('solicitar_restablecimiento_contrasena')
+    
+    if request.method == 'POST':
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+        
+        if not password1 or not password2:
+            messages.error(request, 'Por favor, completa todos los campos.')
+            return render(request, 'inscripciones/reset_password.html', {'validlink': True})
+        
+        if password1 != password2:
+            messages.error(request, 'Las contraseñas no coinciden.')
+            return render(request, 'inscripciones/reset_password.html', {'validlink': True})
+        
+        if len(password1) < 8:
+            messages.error(request, 'La contraseña debe tener al menos 8 caracteres.')
+            return render(request, 'inscripciones/reset_password.html', {'validlink': True})
+        
+        # Cambiar la contraseña
+        user.set_password(password1)
+        user.save()
+        
+        messages.success(
+            request,
+            '✅ ¡Tu contraseña ha sido restablecida exitosamente! '
+            'Ahora puedes iniciar sesión con tu nueva contraseña.'
+        )
+        return redirect('login')
+    
+    return render(request, 'inscripciones/reset_password.html', {'validlink': True})
 
 
 def home(request):
@@ -220,8 +365,42 @@ def inscribirse_practica(request, pk):
     try:
         estudiante = Estudiante.objects.get(user=request.user)
     except Estudiante.DoesNotExist:
-        messages.error(request, 'Debes completar tu perfil de estudiante primero.')
+        messages.error(request, 'Debes completar tu perfil primero.')
         return redirect('perfil_estudiante')
+    
+    # ✅ Verificar si el tipo de usuario puede postular según el campo dirigido_a
+    if practica.dirigido_a == 'estudiantes' and estudiante.tipo_usuario == 'egresado':
+        messages.error(
+            request,
+            'Esta práctica está dirigida únicamente a estudiantes activos. '
+            'Como egresado, busca prácticas marcadas como "Egresados" o "Estudiantes y Egresados".'
+        )
+        return redirect('detalle_practica', pk=pk)
+    
+    if practica.dirigido_a == 'egresados' and estudiante.tipo_usuario == 'estudiante':
+        messages.error(
+            request,
+            'Esta práctica está dirigida únicamente a egresados. '
+            'Busca prácticas marcadas como "Estudiantes" o "Estudiantes y Egresados".'
+        )
+        return redirect('detalle_practica', pk=pk)
+    
+    # ✅ NUEVO: Verificar si el estudiante ya tiene una práctica APROBADA
+    tiene_practica_aprobada = Inscripcion.objects.filter(
+        estudiante=estudiante,
+        estado='aprobada'
+    ).exists() or InscripcionInterna.objects.filter(
+        estudiante=estudiante,
+        estado='aprobada'
+    ).exists()
+    
+    if tiene_practica_aprobada:
+        messages.error(
+            request,
+            'Ya tienes una práctica APROBADA. No puedes postular a otras prácticas '
+            'mientras tengas una práctica activa. Revisa "Mis Inscripciones" para ver tu práctica aprobada.'
+        )
+        return redirect('mis_inscripciones')
     
     # Verificar si ya está inscrito
     inscripcion_existente = Inscripcion.objects.filter(estudiante=estudiante, practica=practica).first()
@@ -246,6 +425,12 @@ def inscribirse_practica(request, pk):
                     # Verificar nuevamente duplicados (por si acaso)
                     if Inscripcion.objects.filter(estudiante=estudiante, practica=practica_locked).exists():
                         messages.warning(request, 'Ya estás inscrito en esta práctica. No puedes inscribirte dos veces.')
+                        return redirect('mis_inscripciones')
+                    
+                    # ✅ Verificar nuevamente que no tenga práctica aprobada (seguridad extra)
+                    if Inscripcion.objects.filter(estudiante=estudiante, estado='aprobada').exists() or \
+                       InscripcionInterna.objects.filter(estudiante=estudiante, estado='aprobada').exists():
+                        messages.error(request, 'Ya tienes una práctica aprobada. No puedes postular a otras.')
                         return redirect('mis_inscripciones')
                     
                     # Crear inscripción
@@ -341,8 +526,42 @@ def inscribirse_practica_interna(request, pk):
     try:
         estudiante = Estudiante.objects.get(user=request.user)
     except Estudiante.DoesNotExist:
-        messages.error(request, 'Debes completar tu perfil de estudiante primero.')
+        messages.error(request, 'Debes completar tu perfil primero.')
         return redirect('perfil_estudiante')
+    
+    # ✅ Verificar si el tipo de usuario puede postular según el campo dirigido_a
+    if practica.dirigido_a == 'estudiantes' and estudiante.tipo_usuario == 'egresado':
+        messages.error(
+            request,
+            'Esta práctica está dirigida únicamente a estudiantes activos. '
+            'Como egresado, busca prácticas marcadas como "Egresados" o "Estudiantes y Egresados".'
+        )
+        return redirect('detalle_practica_interna', pk=pk)
+    
+    if practica.dirigido_a == 'egresados' and estudiante.tipo_usuario == 'estudiante':
+        messages.error(
+            request,
+            'Esta práctica está dirigida únicamente a egresados. '
+            'Busca prácticas marcadas como "Estudiantes" o "Estudiantes y Egresados".'
+        )
+        return redirect('detalle_practica_interna', pk=pk)
+    
+    # ✅ NUEVO: Verificar si el estudiante ya tiene una práctica APROBADA
+    tiene_practica_aprobada = Inscripcion.objects.filter(
+        estudiante=estudiante,
+        estado='aprobada'
+    ).exists() or InscripcionInterna.objects.filter(
+        estudiante=estudiante,
+        estado='aprobada'
+    ).exists()
+    
+    if tiene_practica_aprobada:
+        messages.error(
+            request,
+            'Ya tienes una práctica APROBADA. No puedes postular a otras prácticas '
+            'mientras tengas una práctica activa. Revisa "Mis Inscripciones" para ver tu práctica aprobada.'
+        )
+        return redirect('mis_inscripciones')
     
     # Verificar si ya está inscrito
     inscripcion_existente = InscripcionInterna.objects.filter(estudiante=estudiante, practica_interna=practica).first()
@@ -372,6 +591,12 @@ def inscribirse_practica_interna(request, pk):
                     # Verificar duplicados
                     if InscripcionInterna.objects.filter(estudiante=estudiante, practica_interna=practica_locked).exists():
                         messages.warning(request, 'Ya estás inscrito en esta práctica.')
+                        return redirect('mis_inscripciones')
+                    
+                    # ✅ Verificar nuevamente que no tenga práctica aprobada (seguridad extra)
+                    if Inscripcion.objects.filter(estudiante=estudiante, estado='aprobada').exists() or \
+                       InscripcionInterna.objects.filter(estudiante=estudiante, estado='aprobada').exists():
+                        messages.error(request, 'Ya tienes una práctica aprobada. No puedes postular a otras.')
                         return redirect('mis_inscripciones')
                     
                     # Crear inscripción
@@ -435,27 +660,49 @@ def cancelar_inscripcion_interna(request, pk):
 
 
 def registro_estudiante(request):
-    """Registro de nuevos estudiantes"""
+    """Registro de nuevos estudiantes con verificación de email"""
     if request.user.is_authenticated:
         # Si el usuario autenticado ya tiene un perfil, redirigir a home.
         if hasattr(request.user, 'estudiante'):
             return redirect('home')
-        # Si no tiene perfil, se podría redirigir a una página para crearlo,
-        # pero por ahora, lo más simple es permitir que la vista continúe
-        # para que pueda crear su perfil si llega aquí.
-        # Sin embargo, el flujo normal es que sea redirigido a 'perfil_estudiante'
-        # y desde allí se le pida crear el perfil.
         pass
 
     if request.method == 'POST':
         form = EstudianteRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                user = form.save()
-                messages.success(request, '¡Cuenta creada exitosamente! Por favor, inicia sesión con tus credenciales.')
+                # Guardar el usuario
+                user = form.save(commit=False)
+                # Marcar como inactivo hasta que verifique el email
+                user.is_active = False
+                user.save()
+                
+                # Crear el perfil de estudiante
+                form.save_m2m() if hasattr(form, 'save_m2m') else None
+                
+                # Enviar email de verificación
+                email_sent = supabase_auth.send_verification_email(user, request)
+                
+                if email_sent:
+                    messages.success(
+                        request, 
+                        '✅ ¡Cuenta creada exitosamente! Por favor, revisa tu correo electrónico '
+                        'para verificar tu cuenta antes de iniciar sesión.'
+                    )
+                else:
+                    # Si falla el envío del email, activar la cuenta de todos modos
+                    user.is_active = True
+                    user.save()
+                    messages.warning(
+                        request,
+                        '⚠️ Cuenta creada pero no se pudo enviar el email de verificación. '
+                        'Puedes iniciar sesión directamente.'
+                    )
+                
                 return redirect('login')
+                
             except Exception as e:
-                messages.error(request, f'Error al crear la cuenta: {str(e)}')
+                messages.error(request, f'❌ Error al crear la cuenta: {str(e)}')
         else:
             # Mostrar errores específicos del formulario
             for field, errors in form.errors.items():
@@ -480,14 +727,42 @@ def registro_estudiante(request):
 
 
 def registro_empresa(request):
-    """Registro de nuevas empresas"""
+    """Registro de nuevas empresas con verificación de email"""
     if request.method == 'POST':
         form = EmpresaRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             try:
+                # Guardar el usuario y empresa con documentos
                 user = form.save()
-                messages.success(request, '¡Empresa registrada exitosamente! Por favor, inicia sesión con tus credenciales.')
+                
+                # Marcar usuario como inactivo hasta que verifique el email
+                user.is_active = False
+                user.save()
+                
+                # Enviar email de verificación
+                email_sent = supabase_auth.send_verification_email(user, request)
+                
+                if email_sent:
+                    messages.success(
+                        request,
+                        'Registro enviado exitosamente. Tu solicitud ha sido recibida. '
+                        'Tu registro está PENDIENTE DE APROBACIÓN por el administrador. '
+                        'Hemos enviado un correo de confirmación a tu email. '
+                        'Una vez que el administrador apruebe tu cuenta, podrás iniciar sesión. '
+                        'Recibirás una notificación cuando tu cuenta sea aprobada.'
+                    )
+                else:
+                    # Si falla el envío del email, activar la cuenta de todos modos
+                    user.is_active = True
+                    user.save()
+                    messages.warning(
+                        request,
+                        'Empresa registrada pero no se pudo enviar el email de verificación. '
+                        'Tu registro está pendiente de aprobación por el administrador.'
+                    )
+                
                 return redirect('login')
+                
             except Exception as e:
                 messages.error(request, f'Error al registrar la empresa: {str(e)}')
         else:
@@ -514,14 +789,42 @@ def registro_empresa(request):
 
 
 def registro_facultad(request):
-    """Registro de nuevas facultades"""
+    """Registro de nuevas facultades con verificación de email"""
     if request.method == 'POST':
         form = FacultadRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             try:
+                # Guardar el usuario y facultad con documentos
                 user = form.save()
-                messages.success(request, '¡Facultad registrada exitosamente! Por favor, inicia sesión con tus credenciales.')
+                
+                # Marcar usuario como inactivo hasta que verifique el email
+                user.is_active = False
+                user.save()
+                
+                # Enviar email de verificación
+                email_sent = supabase_auth.send_verification_email(user, request)
+                
+                if email_sent:
+                    messages.success(
+                        request,
+                        'Registro enviado exitosamente. Tu solicitud ha sido recibida. '
+                        'Tu registro está PENDIENTE DE APROBACIÓN por el administrador. '
+                        'Hemos enviado un correo de confirmación a tu email. '
+                        'Una vez que el administrador apruebe tu cuenta, podrás iniciar sesión. '
+                        'Recibirás una notificación cuando tu cuenta sea aprobada.'
+                    )
+                else:
+                    # Si falla el envío del email, activar la cuenta de todos modos
+                    user.is_active = True
+                    user.save()
+                    messages.warning(
+                        request,
+                        'Facultad registrada pero no se pudo enviar el email de verificación. '
+                        'Tu registro está pendiente de aprobación por el administrador.'
+                    )
+                
                 return redirect('login')
+                
             except Exception as e:
                 messages.error(request, f'Error al registrar la facultad: {str(e)}')
         else:
@@ -1155,3 +1458,48 @@ def evaluar_postulante_interno(request, inscripcion_pk):
         'inscripcion': inscripcion,
     }
     return render(request, 'inscripciones/evaluar_postulante_interno.html', context)
+
+
+# ========== NOTIFICACIONES ==========
+
+@login_required
+def obtener_notificaciones_pendientes(request):
+    """
+    Vista AJAX para obtener notificaciones no mostradas del usuario
+    """
+    notificaciones = Notificacion.objects.filter(
+        usuario=request.user,
+        mostrada=False
+    ).order_by('-fecha_creacion')
+    
+    data = [{
+        'id': n.id,
+        'tipo': n.tipo,
+        'titulo': n.titulo,
+        'mensaje': n.mensaje,
+        'practica_nombre': n.get_practica_nombre(),
+        'empresa_o_facultad': n.get_empresa_o_facultad(),
+        'fecha': n.fecha_creacion.strftime('%d/%m/%Y %H:%M')
+    } for n in notificaciones]
+    
+    return JsonResponse({'notificaciones': data})
+
+
+@login_required
+def marcar_notificacion_mostrada(request, notificacion_id):
+    """
+    Vista AJAX para marcar una notificación como mostrada y leída
+    """
+    if request.method == 'POST':
+        try:
+            notificacion = Notificacion.objects.get(
+                id=notificacion_id,
+                usuario=request.user
+            )
+            notificacion.marcar_mostrada()
+            notificacion.marcar_leida()
+            return JsonResponse({'success': True})
+        except Notificacion.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Notificación no encontrada'}, status=404)
+    
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)

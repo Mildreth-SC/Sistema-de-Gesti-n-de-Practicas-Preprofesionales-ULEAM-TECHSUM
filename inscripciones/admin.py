@@ -35,8 +35,8 @@ class EstudianteAdmin(admin.ModelAdmin):
 
 @admin.register(Empresa)
 class EmpresaAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'ruc', 'sector', 'contacto_responsable', 'activa']
-    list_filter = ['sector', 'activa']
+    list_display = ['nombre', 'ruc', 'sector', 'contacto_responsable', 'estado_aprobacion', 'activa']
+    list_filter = ['sector', 'estado_aprobacion', 'activa']
     search_fields = ['nombre', 'ruc', 'contacto_responsable']
     ordering = ['nombre']
     readonly_fields = ['fecha_registro']
@@ -48,8 +48,9 @@ class EmpresaAdmin(admin.ModelAdmin):
         ('Contacto', {
             'fields': ('contacto_responsable', 'email', 'telefono', 'direccion')
         }),
-        ('Detalles', {
-            'fields': ('descripcion', 'activa', 'fecha_registro')
+        ('Estado y Aprobación', {
+            'fields': ('estado_aprobacion', 'observaciones_aprobacion', 'activa', 'descripcion', 'fecha_registro'),
+            'classes': ('wide',)
         }),
         ('Usuario del Sistema', {
             'fields': ('user',),
@@ -60,8 +61,8 @@ class EmpresaAdmin(admin.ModelAdmin):
 
 @admin.register(Practica)
 class PracticaAdmin(admin.ModelAdmin):
-    list_display = ['titulo', 'empresa', 'estado', 'cupos_disponibles', 'fecha_inicio', 'fecha_limite_inscripcion', 'activa']
-    list_filter = ['estado', 'empresa', 'fecha_inicio', 'activa']
+    list_display = ['titulo', 'empresa', 'dirigido_a', 'estado', 'cupos_disponibles', 'fecha_inicio', 'fecha_limite_inscripcion', 'activa']
+    list_filter = ['estado', 'dirigido_a', 'empresa', 'fecha_inicio', 'activa']
     search_fields = ['titulo', 'empresa__nombre', 'descripcion']
     ordering = ['-fecha_publicacion']
     readonly_fields = ['fecha_publicacion']
@@ -117,8 +118,8 @@ class DocumentoInscripcionAdmin(admin.ModelAdmin):
 
 @admin.register(Facultad)
 class FacultadAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'codigo', 'decano', 'contacto_responsable', 'activa']
-    list_filter = ['activa']
+    list_display = ['nombre', 'codigo', 'decano', 'contacto_responsable', 'estado_aprobacion', 'activa']
+    list_filter = ['estado_aprobacion', 'activa']
     search_fields = ['nombre', 'codigo', 'decano', 'contacto_responsable']
     ordering = ['nombre']
     readonly_fields = ['fecha_registro']
@@ -130,8 +131,9 @@ class FacultadAdmin(admin.ModelAdmin):
         ('Contacto', {
             'fields': ('contacto_responsable', 'email', 'telefono', 'direccion')
         }),
-        ('Detalles', {
-            'fields': ('descripcion', 'activa', 'fecha_registro')
+        ('Estado y Aprobación', {
+            'fields': ('estado_aprobacion', 'observaciones_aprobacion', 'activa', 'descripcion', 'fecha_registro'),
+            'classes': ('wide',)
         }),
         ('Usuario del Sistema', {
             'fields': ('user',),

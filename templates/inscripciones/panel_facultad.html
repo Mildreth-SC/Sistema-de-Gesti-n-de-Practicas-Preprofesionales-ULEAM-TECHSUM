@@ -4,6 +4,92 @@
 {% block title %}Panel de Facultad - {{ facultad.nombre }}{% endblock %}
 
 {% block content %}
+<style>
+    .stats-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        overflow: hidden;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    }
+    
+    .stats-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .stats-card h5 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        opacity: 0.9;
+    }
+    
+    .stats-card h2 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .bg-uleam-green {
+        background: linear-gradient(135deg, #228B22 0%, #1a6b1a 100%);
+    }
+    
+    .bg-uleam-dark-green {
+        background: linear-gradient(135deg, #1a6b1a 0%, #145214 100%);
+    }
+    
+    .bg-uleam-light-green {
+        background: linear-gradient(135deg, #32CD32 0%, #228B22 100%);
+    }
+    
+    .bg-uleam-cyan {
+        background: linear-gradient(135deg, #00CED1 0%, #008B8B 100%);
+    }
+    
+    .bg-uleam-gold {
+        background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    }
+    
+    .btn-uleam-green {
+        background: linear-gradient(135deg, #228B22 0%, #1a6b1a 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-uleam-green:hover {
+        background: linear-gradient(135deg, #1a6b1a 0%, #145214 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(34, 139, 34, 0.3);
+        color: white;
+    }
+    
+    .btn-uleam-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-uleam-secondary:hover {
+        background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+        color: white;
+    }
+</style>
+
 <div class="container mt-4">
     <div class="row">
         <div class="col-12">
@@ -16,7 +102,7 @@
     <!-- Estadísticas -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card bg-primary text-white">
+            <div class="card stats-card bg-uleam-dark-green text-white">
                 <div class="card-body">
                     <h5 class="card-title">Total Prácticas</h5>
                     <h2>{{ total_practicas }}</h2>
@@ -24,7 +110,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-success text-white">
+            <div class="card stats-card bg-uleam-green text-white">
                 <div class="card-body">
                     <h5 class="card-title">Prácticas Activas</h5>
                     <h2>{{ practicas_activas }}</h2>
@@ -32,7 +118,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-info text-white">
+            <div class="card stats-card bg-uleam-cyan text-white">
                 <div class="card-body">
                     <h5 class="card-title">Total Postulaciones</h5>
                     <h2>{{ total_postulaciones }}</h2>
@@ -40,7 +126,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card bg-warning text-dark">
+            <div class="card stats-card bg-uleam-gold text-dark">
                 <div class="card-body">
                     <h5 class="card-title">Pendientes</h5>
                     <h2>{{ postulaciones_pendientes }}</h2>
@@ -54,10 +140,10 @@
         <div class="col-12">
             <h4>Acciones Rápidas</h4>
             <div class="btn-group" role="group">
-                <a href="{% url 'crear_practica_facultad' %}" class="btn btn-primary">
+                <a href="{% url 'crear_practica_facultad' %}" class="btn btn-uleam-green">
                     <i class="fas fa-plus"></i> Nueva Práctica Interna
                 </a>
-                <a href="{% url 'mis_practicas_facultad' %}" class="btn btn-secondary">
+                <a href="{% url 'mis_practicas_facultad' %}" class="btn btn-uleam-secondary">
                     <i class="fas fa-list"></i> Todas las Prácticas
                 </a>
             </div>

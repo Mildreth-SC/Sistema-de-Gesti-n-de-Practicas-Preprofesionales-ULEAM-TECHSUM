@@ -22,14 +22,24 @@
                     <p class="text-muted mb-3">{{ estudiante.codigo_estudiante }}</p>
                     
                     <div class="row text-center">
-                        <div class="col-6">
+                        <div class="col-{% if estudiante.tipo_usuario == 'egresado' %}12{% else %}6{% endif %}">
                             <small class="text-muted">Carrera</small>
                             <div class="fw-bold">{{ estudiante.carrera.nombre }}</div>
                         </div>
+                        {% if estudiante.tipo_usuario == 'estudiante' and estudiante.ciclo_actual %}
                         <div class="col-6">
                             <small class="text-muted">Ciclo</small>
                             <div class="fw-bold">{{ estudiante.ciclo_actual }}</div>
                         </div>
+                        {% elif estudiante.tipo_usuario == 'egresado' %}
+                        <div class="col-12 mt-3">
+                            <small class="text-muted">Tipo de Título</small>
+                            <div class="fw-bold">{{ estudiante.get_tipo_titulo_display }}</div>
+                        </div>
+                        <div class="col-12 mt-2">
+                            <span class="badge bg-success">Egresado</span>
+                        </div>
+                        {% endif %}
                     </div>
                     
                     <hr>
@@ -113,7 +123,7 @@
                             
                             <hr>
                             
-                            <h5 class="mb-3">Información del Estudiante</h5>
+                            <h5 class="mb-3">Información del {% if estudiante.tipo_usuario == 'egresado' %}Egresado{% else %}Estudiante{% endif %}</h5>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     {{ estudiante_form.codigo_estudiante|as_crispy_field }}
@@ -123,9 +133,15 @@
                                 </div>
                             </div>
                             <div class="row">
+                                {% if estudiante.tipo_usuario == 'estudiante' %}
                                 <div class="col-md-6 mb-3">
                                     {{ estudiante_form.ciclo_actual|as_crispy_field }}
                                 </div>
+                                {% elif estudiante.tipo_usuario == 'egresado' %}
+                                <div class="col-md-6 mb-3">
+                                    {{ estudiante_form.tipo_titulo|as_crispy_field }}
+                                </div>
+                                {% endif %}
                                 <div class="col-md-6 mb-3">
                                     {{ estudiante_form.telefono|as_crispy_field }}
                                 </div>
@@ -155,7 +171,7 @@
                         <div class="alert alert-warning">
                             <i class="bi bi-exclamation-triangle"></i>
                             <strong>Perfil Incompleto</strong>
-                            <p class="mb-0">Por favor, completa tu perfil de estudiante para continuar.</p>
+                            <p class="mb-0">Por favor, completa tu perfil para continuar.</p>
                         </div>
                         <form method="post" enctype="multipart/form-data">
                             {% csrf_token %}

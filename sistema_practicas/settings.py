@@ -26,23 +26,37 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-^o$qnv_*2$h_j6+9ci7+i
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-# Allowed hosts - acepta Vercel, Render.com, localhost y 127.0.0.1
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,.onrender.com,.vercel.app').split(',')
-
-# CSRF y seguridad para producción
-CSRF_TRUSTED_ORIGINS = config(
-    'CSRF_TRUSTED_ORIGINS',
-    default='https://*.vercel.app,https://*.onrender.com'
-).split(',')
+# Allowed hosts - Render.com, localhost y 127.0.0.1
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,.onrender.com').split(',')
 
 # Seguridad adicional para producción
 if not DEBUG:
+    # Producción
     SECURE_SSL_REDIRECT = False  # Render maneja SSL
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
+    CSRF_TRUSTED_ORIGINS = config(
+        'CSRF_TRUSTED_ORIGINS',
+        default='https://*.onrender.com'
+    ).split(',')
+else:
+    # Desarrollo - Configuración permisiva para localhost
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_HTTPONLY = False
+    CSRF_USE_SESSIONS = False
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_DOMAIN = None
+    CSRF_TRUSTED_ORIGINS = [
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+        'http://localhost',
+        'http://127.0.0.1',
+    ]
 
 
 # Application definition
@@ -67,6 +81,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'inscripciones.middleware.SupabaseAuthMiddleware',  # ← Middleware de Supabase Auth
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -154,6 +169,28 @@ else:
 # Cliente de Supabase (opcional, para usar Supabase Storage, Auth, etc.)
 SUPABASE_URL = config('SUPABASE_URL', default='')
 SUPABASE_KEY = config('SUPABASE_KEY', default='')
+SUPABASE_SERVICE_ROLE_KEY = config('SUPABASE_SERVICE_ROLE_KEY', default='')
+
+# Configuración de Email
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@sistema-practicas.com')
+
+# URL base del sitio (para links en emails)
+SITE_URL = config('SITE_URL', default='http://localhost:8000')
+
+
+# Authentication Backends
+# Permite login con username O email
+AUTHENTICATION_BACKENDS = [
+    'inscripciones.backends.EmailOrUsernameModelBackend',  # Backend personalizado
+    'django.contrib.auth.backends.ModelBackend',  # Backend por defecto (fallback)
+]
 
 
 # Password validation

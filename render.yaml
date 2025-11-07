@@ -1,25 +1,38 @@
 services:
   - type: web
-    name: sistema-practicas
+    name: sistema-practicas-uleam
     env: python
     region: oregon
     plan: free
     branch: main
     buildCommand: "bash build.sh"
-    startCommand: "gunicorn sistema_practicas.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+    startCommand: "gunicorn sistema_practicas.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120 --access-logfile - --error-logfile -"
+    healthCheckPath: /
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10.15
+        value: 3.11.0
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: ".onrender.com,localhost"
+        value: ".onrender.com,localhost,127.0.0.1"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://*.onrender.com"
+      # 🔹 CONFIGURACIÓN DE SUPABASE (configurar en Render Dashboard)
       - key: DATABASE_URL
-        value: postgresql://postgres.ulnphtjyndxsebosbdcp:Juanmero2002@aws-1-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_KEY
         sync: false
+      # 🤖 OPENAI API (Chatbot Inteligente)
+      - key: OPENAI_API_KEY
+        sync: false
+      # 📧 CONFIGURACIÓN DE EMAIL (Opcional)
+      - key: EMAIL_BACKEND
+        value: "django.core.mail.backends.console.EmailBackend"
+      - key: DEFAULT_FROM_EMAIL
+        value: "noreply@uleam.edu.ec"
     autoDeploy: true
+

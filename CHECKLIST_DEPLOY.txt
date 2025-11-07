@@ -1,0 +1,291 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║   🚀 CHECKLIST DE DESPLIEGUE A PRODUCCIÓN - RENDER                        ║
+║   Sistema de Prácticas Preprofesionales ULEAM                             ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ FASE 1: PRE-DESPLIEGUE (5 minutos)                                        │
+└────────────────────────────────────────────────────────────────────────────┘
+
+  [✅] 1. Ejecutar script de verificación
+      → python verificar_pre_deploy.py
+      → Debe mostrar: "✅ PERFECTO! Sistema listo"
+
+  [✅] 2. Revisar archivos críticos
+      → requirements.txt existe
+      → build.sh existe
+      → render.yaml existe
+      → poblar_carreras_uleam.py existe
+
+  [✅] 3. Verificar que .gitignore excluya:
+      → .env
+      → db.sqlite3
+      → *.pyc
+
+  [✅] 4. Commit final
+      → git add .
+      → git commit -m "✅ Listo para producción"
+      → git push origin main
+
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ FASE 2: CONFIGURACIÓN RENDER (10 minutos)                                 │
+└────────────────────────────────────────────────────────────────────────────┘
+
+  [  ] 5. Ir a Render.com
+      → https://dashboard.render.com
+      → Login con GitHub
+
+  [  ] 6. Crear Web Service
+      → Click "New +" → "Web Service"
+      → Conectar con GitHub
+      → Seleccionar repositorio
+
+  [  ] 7. Configuración Básica
+      → Name: sistema-practicas-uleam
+      → Region: Oregon (US West)
+      → Branch: main
+      → Build: bash build.sh
+      → Start: gunicorn sistema_practicas.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+      → Plan: Free
+
+  [  ] 8. Variables de Entorno - OBLIGATORIAS
+      → SECRET_KEY: [Auto-generar con botón Generate]
+      → DEBUG: False
+      → ALLOWED_HOSTS: .onrender.com,localhost,127.0.0.1
+      → CSRF_TRUSTED_ORIGINS: https://*.onrender.com
+      → DATABASE_URL: postgresql://postgres.owrgthzfdlnhkiwzdgbd:Milxi26.@aws-1-us-east-2.pooler.supabase.com:6543/postgres?pgbouncer=true
+      → SUPABASE_URL: https://owrgthzfdlnhkiwzdgbd.supabase.co
+
+  [  ] 9. Obtener SUPABASE_KEY
+      → Ir a: https://supabase.com/dashboard/project/owrgthzfdlnhkiwzdgbd/settings/api
+      → Copiar "anon/public" key
+      → Pegar en variable: SUPABASE_KEY
+
+  [  ] 10. (OPCIONAL) Obtener OPENAI_API_KEY
+      → Ir a: https://platform.openai.com/api-keys
+      → Crear nueva key
+      → Pegar en variable: OPENAI_API_KEY
+
+  [  ] 11. Iniciar Deploy
+      → Click "Create Web Service"
+      → Esperar 5-8 minutos
+
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ FASE 3: VERIFICACIÓN POST-DEPLOY (5 minutos)                              │
+└────────────────────────────────────────────────────────────────────────────┘
+
+  [  ] 12. Verificar Build Logs
+      → Ver logs en Render Dashboard
+      → Buscar: "✅ Build completado exitosamente!"
+      → Buscar: "Starting gunicorn..."
+
+  [  ] 13. Verificar App URL
+      → Copiar URL: https://sistema-practicas-uleam.onrender.com
+      → Abrir en navegador
+      → Debe cargar página principal con CSS correcto
+
+  [  ] 14. Crear Superusuario
+      → En Render → Shell
+      → Ejecutar: python manage.py createsuperuser
+      → Username: admin
+      → Email: admin@uleam.edu.ec
+      → Password: [Tu contraseña segura]
+
+  [  ] 15. Verificar Admin Panel
+      → Ir a: https://tu-app.onrender.com/admin/
+      → Login con superusuario
+      → Verificar modelos visibles
+
+  [  ] 16. Verificar 43 Carreras
+      → En Admin → Carreras
+      → Debe mostrar 43 carreras de ULEAM
+
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ FASE 4: TESTS FUNCIONALES (10 minutos)                                    │
+└────────────────────────────────────────────────────────────────────────────┘
+
+  [  ] 17. Test: Página Principal
+      → Ir a: https://tu-app.onrender.com/
+      → ✅ CSS carga correctamente
+      → ✅ Logo ULEAM visible
+      → ✅ Menú funcional
+
+  [  ] 18. Test: Login
+      → Ir a: /login/
+      → Probar login con admin
+      → ✅ Redirige a home
+
+  [  ] 19. Test: Registro Estudiante
+      → Ir a: /registro/
+      → ✅ Formulario visible
+      → ✅ 43 carreras en selector
+      → Registrar estudiante de prueba
+      → ✅ Registro exitoso
+
+  [  ] 20. Test: Registro Empresa (como usuario nuevo)
+      → Ir a: /registro-empresa/
+      → Registrar empresa de prueba
+      → ✅ Mensaje: "Pendiente de aprobación"
+
+  [  ] 21. Test: Aprobar Empresa (como admin)
+      → Login como admin
+      → Admin → Empresas
+      → Seleccionar empresa
+      → Cambiar estado_aprobacion a "aprobada"
+      → ✅ Empresa puede hacer login
+
+  [  ] 22. Test: Crear Práctica (como empresa)
+      → Login con empresa aprobada
+      → Crear nueva práctica
+      → ✅ Campos área, modalidad, dirigido_a funcionan
+      → ✅ Práctica creada
+
+  [  ] 23. Test: Inscribirse (como estudiante)
+      → Login con estudiante
+      → Ver prácticas disponibles
+      → Inscribirse a una
+      → ✅ Inscripción exitosa
+
+  [  ] 24. Test: Evaluar Postulante (como empresa)
+      → Login con empresa
+      → Ver postulantes de práctica
+      → Evaluar estudiante
+      → ✅ Aprobación/Rechazo funciona
+
+  [  ] 25. Test: Chatbot (si OpenAI configurado)
+      → Abrir chatbot
+      → Hacer pregunta
+      → ✅ Responde correctamente
+
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ FASE 5: CONFIGURACIÓN FINAL (OPCIONAL)                                    │
+└────────────────────────────────────────────────────────────────────────────┘
+
+  [  ] 26. Poblar Datos de Prueba
+      → En Shell de Render
+      → python poblar_datos_prueba.py
+      → ✅ Empresas, estudiantes, prácticas creadas
+
+  [  ] 27. Configurar Email Real (Gmail o SendGrid)
+      → Ver: VARIABLES_ENTORNO_RENDER.md
+      → Agregar variables EMAIL_*
+      → ✅ Emails se envían
+
+  [  ] 28. Configurar Dominio Personalizado
+      → Render → Settings → Custom Domains
+      → Agregar: practicas.uleam.edu.ec
+      → Configurar DNS CNAME
+      → ✅ Dominio funciona
+
+  [  ] 29. Monitoreo
+      → Configurar alertas en Render
+      → Revisar logs diariamente
+      → ✅ Sistema estable
+
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ FASE 6: LANZAMIENTO (1 minuto)                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+  [  ] 30. Comunicar URL a Usuarios
+      → Estudiantes: https://tu-app.onrender.com
+      → Empresas: https://tu-app.onrender.com/registro-empresa/
+      → Facultades: https://tu-app.onrender.com/registro-facultad/
+      → Admin: https://tu-app.onrender.com/admin/
+
+  [  ] 31. Documentación de Usuario
+      → Crear guía rápida para estudiantes
+      → Crear guía para empresas
+      → ✅ Usuarios tienen instrucciones
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║   ✅ CHECKLIST COMPLETO                                                   ║
+║                                                                            ║
+║   [ ] Fase 1: Pre-Despliegue (5 min)                                     ║
+║   [ ] Fase 2: Configuración Render (10 min)                              ║
+║   [ ] Fase 3: Verificación Post-Deploy (5 min)                           ║
+║   [ ] Fase 4: Tests Funcionales (10 min)                                 ║
+║   [ ] Fase 5: Configuración Final (Opcional)                             ║
+║   [ ] Fase 6: Lanzamiento (1 min)                                        ║
+║                                                                            ║
+║   🎉 TOTAL: ~30 minutos para deploy completo                             ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ 🚨 TROUBLESHOOTING RÁPIDO                                                 │
+└────────────────────────────────────────────────────────────────────────────┘
+
+  ❌ Error: "Application failed to respond"
+     → Revisar logs en Render
+     → Verificar DATABASE_URL correcto
+     → Verificar que Supabase esté activo
+
+  ❌ Error: CSS no carga
+     → Verificar que collectstatic se ejecutó en build.sh
+     → Verificar STATIC_ROOT en settings.py
+
+  ❌ Error: Base de datos vacía
+     → Ejecutar en Shell: python manage.py migrate
+     → Ejecutar: python poblar_carreras_uleam.py
+
+  ⏱️ App tarda mucho (primera carga)
+     → Normal en plan Free (~50 segundos)
+     → Se apaga después de 15 min sin uso
+     → Solución: Upgrade a Starter ($7/mes)
+
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ 📋 INFORMACIÓN DE CONTACTO Y SOPORTE                                      │
+└────────────────────────────────────────────────────────────────────────────┘
+
+  Render Status:     https://status.render.com
+  Render Docs:       https://render.com/docs
+  Supabase Status:   https://status.supabase.com
+  Supabase Docs:     https://supabase.com/docs
+
+  Documentación del Sistema:
+  - DEPLOY_RAPIDO.md              → Comandos rápidos
+  - DESPLIEGUE_RENDER.md          → Guía completa detallada
+  - VARIABLES_ENTORNO_RENDER.md   → Variables explicadas
+  - CUMPLIMIENTO_RETO_1.md        → Funcionalidades verificadas
+
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│ 💾 GUARDAR CREDENCIALES IMPORTANTES                                       │
+└────────────────────────────────────────────────────────────────────────────┘
+
+  URL Producción:  https://sistema-practicas-uleam.onrender.com
+  
+  Admin Panel:
+    Usuario:  admin
+    Password: ___________________________________
+  
+  Supabase:
+    URL:      https://owrgthzfdlnhkiwzdgbd.supabase.co
+    Key:      ___________________________________
+  
+  OpenAI:
+    API Key:  ___________________________________
+  
+  Render:
+    Email:    ___________________________________
+    Password: ___________________________________
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+  📅 Fecha de Deploy: ___ / ___ / 2025
+  ✅ Responsable:     _______________________
+  🎯 Status:          [ ] En progreso  [ ] Completado
+
+═══════════════════════════════════════════════════════════════════════════════

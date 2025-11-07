@@ -2,8 +2,14 @@ from django.http import JsonResponse
 from django.urls import reverse
 from inscripciones.models import Practica, Empresa, PracticaInterna, Facultad
 from django.db.models import Count
+from django.conf import settings
+from decouple import config
 import json
 import re
+from openai import OpenAI
+
+# Inicializar cliente de OpenAI (la API key se debe configurar en .env o variables de entorno)
+client = OpenAI(api_key=config('OPENAI_API_KEY', default=''))
 
 def chatbot_view(request):
     if request.method == 'POST':
@@ -20,11 +26,355 @@ def chatbot_view(request):
                 ]
             })
         
-        # Procesar mensaje y obtener respuesta con opciones
-        response_data = process_message(message)
+        # Procesar mensaje con OpenAI
+        response_data = process_message_with_ai(message)
         return JsonResponse(response_data)
     
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+def get_system_context():
+    """Obtiene contexto detallado del sistema para el chatbot"""
+    try:
+        # Estadísticas generales - SIN filtro activa para obtener TODO
+        practicas_all = Practica.objects.all()
+        practicas_count = practicas_all.count()
+        
+        practicas_internas_all = PracticaInterna.objects.all()
+        practicas_internas_count = practicas_internas_all.count()
+        
+        empresas_all = Empresa.objects.all()
+        empresas_count = empresas_all.count()
+        
+        facultades_all = Facultad.objects.all()
+        facultades_count = facultades_all.count()
+        
+        # Debug logging
+        print(f"DEBUG CHATBOT - Prácticas encontradas: {practicas_count}")
+        print(f"DEBUG CHATBOT - Prácticas internas encontradas: {practicas_internas_count}")
+        print(f"DEBUG CHATBOT - Empresas encontradas: {empresas_count}")
+        print(f"DEBUG CHATBOT - Facultades encontradas: {facultades_count}")
+        
+        # Obtener prácticas externas detalladas - TODAS
+        practicas_externas = Practica.objects.select_related('empresa').values(
+            'id', 'titulo', 'empresa__nombre', 'empresa__direccion', 'area', 'modalidad',
+            'duracion_semanas', 'horas_semana', 'requisitos', 'descripcion', 
+            'cupos_disponibles', 'estado', 'fecha_inicio'
+        )[:15]  # Aumentado a 15
+        
+        practicas_ext_info = []
+        for p in practicas_externas:
+            info = f"• {p['titulo']} en {p['empresa__nombre']}"
+            info += f"\n  - Ubicación: {p['empresa__direccion'] or 'No especificada'}"
+            info += f"\n  - Área: {dict(Practica.AREA_CHOICES).get(p['area'], p['area'])}"
+            info += f"\n  - Modalidad: {dict(Practica.MODALIDAD_CHOICES).get(p['modalidad'], p['modalidad'])}"
+            info += f"\n  - Duración: {p['duracion_semanas']} semanas ({p['horas_semana']} hrs/semana)"
+            info += f"\n  - Estado: {p['estado']}"
+            if p.get('cupos_disponibles'):
+                info += f"\n  - Cupos: {p['cupos_disponibles']}"
+            practicas_ext_info.append(info)
+        
+        print(f"DEBUG CHATBOT - Prácticas externas procesadas: {len(practicas_ext_info)}")
+        
+        # Obtener prácticas internas detalladas - TODAS
+        practicas_int = PracticaInterna.objects.select_related('facultad').values(
+            'id', 'titulo', 'facultad__nombre', 'tipo_servicio', 'modalidad',
+            'duracion_semanas', 'horas_semana', 'descripcion', 
+            'cupos_disponibles', 'estado', 'beneficios'
+        )[:10]  # Aumentado a 10
+        
+        practicas_int_info = []
+        for p in practicas_int:
+            info = f"• {p['titulo']} - {p['facultad__nombre']}"
+            info += f"\n  - Tipo: {p['tipo_servicio'] or 'General'}"
+            info += f"\n  - Modalidad: {dict(PracticaInterna.MODALIDAD_CHOICES).get(p['modalidad'], p['modalidad'])}"
+            info += f"\n  - Duración: {p['duracion_semanas']} semanas ({p['horas_semana']} hrs/semana)"
+            info += f"\n  - Estado: {p['estado']}"
+            if p.get('cupos_disponibles'):
+                info += f"\n  - Cupos: {p['cupos_disponibles']}"
+            practicas_int_info.append(info)
+        
+        print(f"DEBUG CHATBOT - Prácticas internas procesadas: {len(practicas_int_info)}")
+        
+        # Obtener empresas activas - TODAS
+        empresas = Empresa.objects.values('nombre', 'sector', 'direccion')[:10]
+        empresas_info = [f"• {e['nombre']} - {e['sector'] or 'Varios sectores'} ({e['direccion'] or 'Ubicación no especificada'})" for e in empresas]
+        
+        # Obtener facultades - TODAS
+        facultades = Facultad.objects.values('nombre', 'decano')[:8]
+        facultades_info = [f"• {f['nombre']}" for f in facultades]
+        
+        context = f"""
+═══════════════════════════════════════════════════════════════
+SISTEMA DE GESTIÓN DE PRÁCTICAS PREPROFESIONALES - ULEAM
+═══════════════════════════════════════════════════════════════
+
+📊 ESTADÍSTICAS ACTUALES:
+• Prácticas externas activas: {practicas_count}
+• Prácticas internas (facultades): {practicas_internas_count}
+• Empresas colaboradoras: {empresas_count}
+• Facultades participantes: {facultades_count}
+
+🏢 PRÁCTICAS EXTERNAS DISPONIBLES:
+{chr(10).join(practicas_ext_info) if practicas_ext_info else 'No hay prácticas externas disponibles actualmente.'}
+
+🎓 PRÁCTICAS INTERNAS DISPONIBLES:
+{chr(10).join(practicas_int_info) if practicas_int_info else 'No hay prácticas internas disponibles actualmente.'}
+
+🏭 EMPRESAS COLABORADORAS:
+{chr(10).join(empresas_info) if empresas_info else 'No hay empresas registradas actualmente.'}
+
+🎓 FACULTADES PARTICIPANTES:
+{chr(10).join(facultades_info) if facultades_info else 'No hay facultades registradas.'}
+
+🔗 URLS DEL SISTEMA:
+• Página Principal: /
+• Ver Prácticas Externas: /practicas/
+• Ver Prácticas Internas: /practicas-internas/
+• Ver Empresas: /empresas/
+• Registro Estudiante: /registro/
+• Registro Empresa: /registro-empresa/
+• Registro Facultad: /registro-facultad/
+• Iniciar Sesión: /login/
+• Panel Admin: /admin/
+
+═══════════════════════════════════════════════════════════════
+        """
+        
+        print("DEBUG CHATBOT - Contexto generado exitosamente")
+        return context.strip()
+        
+    except Exception as e:
+        error_msg = f"Error al obtener contexto del sistema: {str(e)}"
+        print(f"DEBUG CHATBOT - ERROR: {error_msg}")
+        import traceback
+        print(traceback.format_exc())
+        return error_msg
+
+
+def process_message_with_ai(message):
+    """Procesa el mensaje usando OpenAI GPT con contexto mejorado"""
+    
+    # Verificar si hay API key configurada
+    if not config('OPENAI_API_KEY', default=''):
+        # Fallback al sistema anterior
+        return process_message(message)
+    
+    try:
+        # Obtener contexto del sistema
+        system_context = get_system_context()
+        
+        # Crear el prompt con contexto del sistema
+        system_prompt = f"""Eres "ULEAM Assistant", un asistente virtual amigable, profesional y muy útil del Sistema de Gestión de Prácticas Preprofesionales de la Universidad Laica Eloy Alfaro de Manabí (ULEAM).
+
+🎯 TU MISIÓN:
+Ayudar a estudiantes, empresas y facultades con información precisa sobre prácticas preprofesionales.
+
+👥 TIPOS DE USUARIOS:
+1. ESTUDIANTES: Buscan prácticas, necesitan orientación sobre registro e inscripción
+2. EMPRESAS: Quieren publicar ofertas y gestionar postulantes
+3. FACULTADES: Gestionan prácticas internas
+
+📊 INFORMACIÓN ACTUAL DEL SISTEMA:
+{system_context}
+
+🤖 REGLAS DE COMPORTAMIENTO:
+
+1. SALUDO INICIAL:
+   - SIEMPRE saluda cordialmente cuando detectes un saludo
+   - Preséntate como "ULEAM Assistant"
+   - Muestra brevemente las estadísticas del sistema
+   - Ofrece opciones claras de ayuda
+
+2. BÚSQUEDA DE PRÁCTICAS:
+   - Cuando pregunten por prácticas, lista las disponibles con DETALLES completos
+   - Incluye: título, empresa/facultad, ubicación, duración, modalidad
+   - Menciona si son externas (empresas) o internas (facultades)
+   - Proporciona el link directo: /practicas/ o /practicas-internas/
+
+3. INFORMACIÓN DE EMPRESAS:
+   - Lista empresas colaboradoras cuando lo soliciten
+   - Incluye sector y ubicación
+   - Menciona el link: /empresas/
+
+4. REGISTRO:
+   - Explica CLARAMENTE los 3 tipos de registro: estudiante, empresa, facultad
+   - Proporciona URLs específicas para cada uno
+   - Menciona documentos necesarios
+
+5. BÚSQUEDAS ESPECÍFICAS:
+   - Si buscan por carrera, área o ubicación, filtra de las prácticas listadas
+   - Sé específico y preciso
+   - Si no encuentras coincidencias exactas, sugiere similares
+
+6. ESTILO DE RESPUESTA:
+   - Usa emojis moderadamente (1-3 por respuesta)
+   - Estructura con bullets y negritas cuando sea necesario
+   - Máximo 400 palabras por respuesta
+   - Sé conversacional pero profesional
+   - SIEMPRE termina ofreciendo ayuda adicional
+
+7. URLs:
+   - SIEMPRE proporciona URLs cuando sean relevantes
+   - Formato: "Puedes verlas aquí: /practicas/"
+
+8. NO INVENTES:
+   - Si no tienes la información, admítelo
+   - Sugiere contactar al administrador o revisar directamente en el sistema
+
+EJEMPLOS DE RESPUESTAS ESPERADAS:
+
+Usuario: "Hola"
+Asistente: "¡Hola! 😊 Soy ULEAM Assistant, tu asistente virtual para prácticas preprofesionales.
+
+📊 Actualmente tenemos:
+• [X] prácticas externas
+• [X] prácticas internas
+• [X] empresas colaboradoras
+
+¿En qué puedo ayudarte hoy?"
+
+Usuario: "¿Qué prácticas hay disponibles?"
+Asistente: "¡Excelente! 🎯 Tenemos [X] prácticas activas:
+
+🏢 PRÁCTICAS EXTERNAS:
+[Lista detallada con empresa, ubicación, duración]
+
+🎓 PRÁCTICAS INTERNAS:
+[Lista detallada con facultad, departamento]
+
+Puedes ver todas aquí: /practicas/ y /practicas-internas/
+
+¿Te interesa alguna en particular?"
+
+Usuario: "Busco prácticas de ingeniería"
+Asistente: "¡Perfecto! 👨‍💻 De las [X] prácticas disponibles, estas son relacionadas con ingeniería:
+
+[Lista filtrada y específica]
+
+¿Te gustaría más detalles de alguna?"
+
+Recuerda: Eres útil, preciso y siempre basas tus respuestas en la información real del sistema."""
+
+        # Llamar a OpenAI
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": message}
+            ],
+            max_tokens=600,
+            temperature=0.7,
+        )
+        
+        ai_response = response.choices[0].message.content
+        
+        # Generar opciones inteligentes basadas en el contexto
+        options = generate_smart_options(message, ai_response)
+        
+        return {
+            'response': ai_response,
+            'options': options
+        }
+        
+    except Exception as e:
+        # En caso de error, usar el sistema de fallback
+        print(f"Error en OpenAI: {str(e)}")
+        return process_message(message)
+
+
+def generate_smart_options(user_message, ai_response):
+    """Genera opciones inteligentes y contextuales basadas en el mensaje del usuario"""
+    msg = user_message.lower()
+    
+    # Detectar saludos
+    if any(word in msg for word in ['hola', 'buenos', 'buenas', 'hey', 'saludos', 'qué tal']):
+        return [
+            {'icon': 'bi-briefcase-fill', 'text': 'Ver Prácticas', 'message': '¿Qué prácticas hay disponibles?'},
+            {'icon': 'bi-building', 'text': 'Ver Empresas', 'message': 'Muéstrame las empresas colaboradoras'},
+            {'icon': 'bi-person-plus-fill', 'text': 'Registrarme', 'message': '¿Cómo me registro?'},
+            {'icon': 'bi-question-circle-fill', 'text': 'Ayuda', 'message': 'Necesito ayuda general'},
+        ]
+    
+    # Detectar búsqueda de prácticas
+    if any(word in msg for word in ['práctica', 'practica', 'pasantía', 'disponible', 'ofertas', 'oportunidades']):
+        return [
+            {'icon': 'bi-building-fill', 'text': 'Prácticas Externas', 'message': 'Ver prácticas en empresas'},
+            {'icon': 'bi-mortarboard-fill', 'text': 'Prácticas Internas', 'message': 'Ver prácticas en facultades'},
+            {'icon': 'bi-search', 'text': 'Buscar Específica', 'message': 'Busco práctica de [tu carrera]'},
+            {'icon': 'bi-clipboard-check', 'text': 'Cómo Inscribirme', 'message': '¿Cómo me inscribo a una práctica?'},
+        ]
+    
+    # Detectar búsqueda de empresas
+    if any(word in msg for word in ['empresa', 'compañía', 'organización', 'colaboradora']):
+        return [
+            {'icon': 'bi-list-ul', 'text': 'Lista Empresas', 'message': 'Muéstrame todas las empresas'},
+            {'icon': 'bi-geo-alt-fill', 'text': 'Por Ubicación', 'message': 'Empresas en [tu ciudad]'},
+            {'icon': 'bi-briefcase', 'text': 'Ver Ofertas', 'message': 'Qué prácticas ofrecen'},
+            {'icon': 'bi-building-add', 'text': 'Registrar Empresa', 'message': 'Cómo registrar mi empresa'},
+        ]
+    
+    # Detectar búsqueda por carrera/área
+    if any(word in msg for word in ['ingeniería', 'ingenieria', 'sistemas', 'industrial', 'civil', 
+                                     'medicina', 'enfermería', 'derecho', 'administración', 'contabilidad',
+                                     'marketing', 'diseño', 'arquitectura', 'educación']):
+        return [
+            {'icon': 'bi-filter-circle', 'text': 'Filtrar Más', 'message': 'Prácticas de [área específica]'},
+            {'icon': 'bi-eye-fill', 'text': 'Ver Detalles', 'message': 'Más información de estas prácticas'},
+            {'icon': 'bi-bookmark-plus', 'text': 'Cómo Postular', 'message': '¿Cómo postulo a estas prácticas?'},
+            {'icon': 'bi-arrow-repeat', 'text': 'Otra Búsqueda', 'message': 'Buscar en otra área'},
+        ]
+    
+    # Detectar registro
+    if any(word in msg for word in ['registro', 'registrar', 'cuenta', 'crear', 'inscribir']):
+        return [
+            {'icon': 'bi-person-badge', 'text': 'Soy Estudiante', 'message': 'Registrarme como estudiante'},
+            {'icon': 'bi-building-fill-add', 'text': 'Soy Empresa', 'message': 'Registrar mi empresa'},
+            {'icon': 'bi-bank', 'text': 'Soy Facultad', 'message': 'Registrar facultad'},
+            {'icon': 'bi-info-circle', 'text': 'Más Info', 'message': 'Qué necesito para registrarme'},
+        ]
+    
+    # Detectar ubicación/ciudad
+    if any(word in msg for word in ['manta', 'portoviejo', 'chone', 'bahía', 'jama', 'pedernales',
+                                     'ubicación', 'ciudad', 'donde', 'lugar']):
+        return [
+            {'icon': 'bi-geo-fill', 'text': 'Por Ciudad', 'message': 'Prácticas en [ciudad específica]'},
+            {'icon': 'bi-map', 'text': 'Todas Ubicaciones', 'message': 'Ver todas las ubicaciones disponibles'},
+            {'icon': 'bi-arrow-repeat', 'text': 'Otra Ciudad', 'message': 'Buscar en otra ciudad'},
+        ]
+    
+    # Detectar documentos
+    if any(word in msg for word in ['documento', 'archivo', 'cv', 'curriculum', 'certificado', 'carta']):
+        return [
+            {'icon': 'bi-file-earmark-text', 'text': 'Qué Necesito', 'message': 'Qué documentos necesito'},
+            {'icon': 'bi-file-earmark-pdf', 'text': 'Formato CV', 'message': 'Cómo debe ser mi CV'},
+            {'icon': 'bi-upload', 'text': 'Cómo Subir', 'message': 'Cómo subir mis documentos'},
+        ]
+    
+    # Detectar proceso/inscripción
+    if any(word in msg for word in ['proceso', 'pasos', 'cómo', 'inscripción', 'postular', 'aplicar']):
+        return [
+            {'icon': 'bi-list-ol', 'text': 'Paso a Paso', 'message': 'Proceso completo de inscripción'},
+            {'icon': 'bi-calendar-check', 'text': 'Requisitos', 'message': 'Qué requisitos debo cumplir'},
+            {'icon': 'bi-clock-history', 'text': 'Tiempo', 'message': 'Cuánto tiempo toma el proceso'},
+        ]
+    
+    # Detectar menú/inicio
+    if any(word in msg for word in ['menú', 'menu', 'inicio', 'principal', 'opciones', 'volver']):
+        return [
+            {'icon': 'bi-briefcase-fill', 'text': 'Ver Prácticas', 'message': 'Mostrar prácticas disponibles'},
+            {'icon': 'bi-building', 'text': 'Ver Empresas', 'message': 'Empresas colaboradoras'},
+            {'icon': 'bi-person-plus-fill', 'text': 'Registrarme', 'message': 'Cómo me registro'},
+            {'icon': 'bi-info-circle-fill', 'text': 'Ayuda', 'message': 'Necesito ayuda'},
+        ]
+    
+    # Opciones por defecto (cuando no coincide con ningún patrón)
+    return [
+        {'icon': 'bi-briefcase-fill', 'text': 'Ver Prácticas', 'message': '¿Qué prácticas hay?'},
+        {'icon': 'bi-building', 'text': 'Ver Empresas', 'message': 'Ver empresas'},
+        {'icon': 'bi-question-circle', 'text': 'Ayuda', 'message': 'Necesito ayuda'},
+        {'icon': 'bi-arrow-repeat', 'text': 'Menú', 'message': 'Volver al menú principal'},
+    ]
 
 
 def process_message(message):
@@ -86,6 +436,41 @@ def process_message(message):
         },
         
         # ============ PRÁCTICAS - INFORMACIÓN GENERAL ============
+        # IMPORTANTE: Orden de prioridad - primero específicas, luego generales
+        
+        # 1. Prácticas INTERNAS (más específico)
+        {
+            'patterns': [
+                r'practica\s*interna',
+                r'practicas\s*internas',
+                r'ver.*(practica.*)interna',
+                r'mostrar.*(practica.*)interna',
+                r'dame.*(practica.*)interna',
+                r'muestra.*(practica.*)interna',
+                r'^interna$',
+                r'^\s*interna\s*$',
+                r'dame\s+(las\s+)?interna',
+                r'ver\s+(las\s+)?interna',
+                r'mostrar\s+(las\s+)?interna',
+                r'facultad',
+                r'de\s+la\s+universidad',
+                r'en\s+uleam',
+            ],
+            'response': lambda: get_practicas_internas_disponibles()
+        },
+        
+        # 2. Prácticas EXTERNAS (específico)
+        {
+            'patterns': [
+                r'practica\s*externa',
+                r'practicas\s*externas',
+                r'ver.*(practica.*)externa',
+                r'en\s+empresa',
+            ],
+            'response': lambda: get_practicas_disponibles()
+        },
+        
+        # 3. Estadísticas
         {
             'patterns': [
                 r'\b(cuantas|cuantos|estadistica|numero).*(practica|empresa|disponible)\b',
@@ -93,6 +478,8 @@ def process_message(message):
             ],
             'response': lambda: get_estadisticas_sistema()
         },
+        
+        # 4. Información general sobre prácticas
         {
             'patterns': [
                 r'\b(que son|que es|info|informacion sobre).*(practica|pasantia)\b',
@@ -100,12 +487,20 @@ def process_message(message):
             ],
             'response': lambda: f"¡Buena pregunta! 😊 Te explico de manera sencilla:\n\nLas prácticas pre-profesionales son como tu primer contacto con el mundo laboral real. Es donde pones en práctica todo lo que has aprendido en la universidad.\n\n**¿Qué tipos hay?**\n🏢 **Externas:** Trabajas en empresas privadas - ¡la experiencia real del mercado!\n🎓 **Internas:** Apoyas dentro de ULEAM - ideal si tienes horarios complicados\n\n**Lo importante:**\n⏱️ Entre 240-480 horas (depende de tu carrera)\n📊 Te evalúan por quimestres, igual que tus materias\n📚 Necesitas tener aprobado al menos el 60% de tus créditos\n\nEs obligatorio para graduarte, pero créeme, ¡es una experiencia que vale oro! 💎\n\n{get_estadisticas_sistema()}"
         },
+        
+        # 5. Ver prácticas (GENERAL - por defecto muestra externas)
         {
             'patterns': [
                 r'\b(como|donde|ver|buscar|encontrar).*(practica|practicas disponible|oferta)\b',
                 r'\b(lista|listado).*(practica)\b',
-                r'\b(ver practica)\b',
-                r'\b(muestra|dame).*(practica)\b',
+                r'ver\s+practica',
+                r'mostrar\s+practica',
+                r'dame\s+practica',
+                r'muestra(me)?\s+practica',
+                r'quiero\s+ver\s+practica',
+                r'busco\s+practica',
+                r'\b(que|cuales).*(practica).*(hay|disponible|existe)\b',
+                r'\b(hay|existe).*(practica|oferta)\b',
             ],
             'response': lambda: get_practicas_disponibles()
         },
@@ -125,16 +520,9 @@ def process_message(message):
         },
         {
             'patterns': [
-                r'\b(practica interna|practica dentro|dentro de uleam)\b',
-                r'\b(ver|muestra|dame).*(practica interna)\b',
-                r'\b(mostrar practica interna)\b',
-            ],
-            'response': lambda: get_practicas_internas_disponibles()
-        },
-        {
-            'patterns': [
                 r'\b(todas las practica|ver todas|mostrar todas).*(practica|disponible)\b',
                 r'\b(practica externa).*(interna)\b',
+                r'tanto.*(externa|interna)',
             ],
             'response': lambda: f"{get_practicas_disponibles()}\n\n---\n\n{get_practicas_internas_disponibles()}"
         },
@@ -179,9 +567,16 @@ def process_message(message):
         # ============ EMPRESAS ============
         {
             'patterns': [
-                r'\b(lista|ver|buscar|conocer|muestra|dame).*(empresa|empleador)\b',
-                r'\b(empresa|compañia).*(colabora|asociada|disponible)\b',
-                r'\b(todas las empresa)\b',
+                r'ver\s+(las\s+)?empresa',
+                r'mostrar\s+(las\s+)?empresa',
+                r'dame\s+(las\s+)?empresa',
+                r'muestra(me)?\s+(las\s+)?empresa',
+                r'lista\s+(de\s+)?empresa',
+                r'cuales\s+empresa',
+                r'que\s+empresa',
+                r'empresas\s+colaboradora',
+                r'empresas\s+disponible',
+                r'todas\s+las\s+empresa',
             ],
             'response': lambda: get_empresas_colaboradoras()
         },
@@ -649,7 +1044,7 @@ def normalize_text(text):
 
 def get_practicas_disponibles():
     """Obtiene la lista de prácticas externas disponibles"""
-    practicas = Practica.objects.filter(activa=True, estado='abierta').select_related('empresa')[:5]
+    practicas = Practica.objects.filter(estado='disponible').select_related('empresa')[:8]
     
     if not practicas:
         return "Actualmente no hay prácticas externas disponibles. Te recomiendo revisar la página regularmente, ya que se publican nuevas ofertas constantemente."
@@ -659,21 +1054,23 @@ def get_practicas_disponibles():
         response += f"{i}. **{practica.titulo}**\n"
         response += f"   🏢 Empresa: {practica.empresa.nombre}\n"
         response += f"   📍 Sector: {practica.empresa.sector}\n"
+        response += f"   🎯 Área: {practica.get_area_display()}\n"
+        response += f"   💻 Modalidad: {practica.get_modalidad_display()}\n"
         response += f"   👥 Cupos: {practica.cupos_disponibles}\n"
-        response += f"   📅 Inicio: {practica.fecha_inicio.strftime('%d/%m/%Y')}\n"
-        response += f"   ⏰ Límite inscripción: {practica.fecha_limite_inscripcion.strftime('%d/%m/%Y')}\n\n"
+        response += f"   ⏱️ Duración: {practica.duracion_semanas} semanas ({practica.horas_semana} hrs/sem)\n"
+        response += f"   📅 Inicio: {practica.fecha_inicio.strftime('%d/%m/%Y')}\n\n"
     
-    total = Practica.objects.filter(activa=True, estado='abierta').count()
-    if total > 5:
-        response += f"📋 Y {total - 5} prácticas más disponibles en el sistema.\n\n"
+    total = Practica.objects.filter(estado='disponible').count()
+    if total > 8:
+        response += f"📋 Y {total - 8} prácticas más disponibles en el sistema.\n\n"
     
-    response += "💡 Para ver todas las prácticas y más detalles, visita la sección 'Prácticas' en el menú principal."
+    response += "💡 Para ver todas las prácticas y más detalles, visita: /practicas/"
     return response
 
 
 def get_practicas_internas_disponibles():
     """Obtiene la lista de prácticas internas disponibles"""
-    practicas = PracticaInterna.objects.filter(activa=True, estado='abierta').select_related('facultad')[:5]
+    practicas = PracticaInterna.objects.filter(estado='disponible').select_related('facultad')[:6]
     
     if not practicas:
         return "Actualmente no hay prácticas internas disponibles. Las prácticas internas se publican cada semestre."
@@ -683,24 +1080,25 @@ def get_practicas_internas_disponibles():
         response += f"{i}. **{practica.titulo}**\n"
         response += f"   🏛️ Facultad: {practica.facultad.nombre}\n"
         response += f"   📋 Tipo: {practica.get_tipo_servicio_display()}\n"
-        response += f"   👥 Cupos: {practica.cupos_disponibles}\n"
-        response += f"   📅 Inicio: {practica.fecha_inicio.strftime('%d/%m/%Y')}\n"
-        response += f"   ⏰ Límite inscripción: {practica.fecha_limite_inscripcion.strftime('%d/%m/%Y')}\n\n"
+        response += f"   � Modalidad: {practica.get_modalidad_display()}\n"
+        response += f"   �👥 Cupos: {practica.cupos_disponibles}\n"
+        response += f"   ⏱️ Duración: {practica.duracion_semanas} semanas ({practica.horas_semana} hrs/sem)\n"
+        response += f"   📅 Inicio: {practica.fecha_inicio.strftime('%d/%m/%Y')}\n\n"
     
-    total = PracticaInterna.objects.filter(activa=True, estado='abierta').count()
-    if total > 5:
-        response += f"📋 Y {total - 5} prácticas internas más disponibles.\n\n"
+    total = PracticaInterna.objects.filter(estado='disponible').count()
+    if total > 6:
+        response += f"📋 Y {total - 6} prácticas internas más disponibles.\n\n"
     
-    response += "💡 Para ver todas las prácticas internas, visita la sección 'Prácticas' en el menú principal."
+    response += "💡 Para ver todas las prácticas internas, visita: /practicas-internas/"
     return response
 
 
 def get_empresas_colaboradoras(sector=None):
     """Obtiene la lista de empresas colaboradoras"""
     if sector:
-        empresas = Empresa.objects.filter(activa=True, sector__icontains=sector)[:5]
+        empresas = Empresa.objects.filter(sector__icontains=sector)[:5]
     else:
-        empresas = Empresa.objects.filter(activa=True).annotate(
+        empresas = Empresa.objects.annotate(
             num_practicas=Count('practica')
         ).order_by('-num_practicas')[:8]
     
@@ -715,7 +1113,7 @@ def get_empresas_colaboradoras(sector=None):
         response = "🏢 **Empresas Colaboradoras Principales:**\n\n"
     
     for i, empresa in enumerate(empresas, 1):
-        num_practicas = empresa.practica_set.filter(activa=True).count()
+        num_practicas = empresa.practica_set.filter(estado='disponible').count()
         response += f"{i}. **{empresa.nombre}**\n"
         response += f"   📋 Sector: {empresa.sector}\n"
         response += f"   📍 Ubicación: {empresa.direccion or 'No especificada'}\n"
@@ -724,20 +1122,20 @@ def get_empresas_colaboradoras(sector=None):
             response += f"   📧 Contacto: {empresa.email}\n"
         response += "\n"
     
-    total = Empresa.objects.filter(activa=True).count()
+    total = Empresa.objects.count()
     if total > len(empresas):
         response += f"📊 Total de empresas colaboradoras: {total}\n\n"
     
-    response += "💡 Para ver el perfil completo de cada empresa y sus prácticas, visita la sección 'Empresas'."
+    response += "💡 Para ver el perfil completo de cada empresa y sus prácticas, visita: /empresas/"
     return response
 
 
 def get_estadisticas_sistema():
     """Obtiene estadísticas generales del sistema"""
-    total_practicas = Practica.objects.filter(activa=True, estado='abierta').count()
-    total_internas = PracticaInterna.objects.filter(activa=True, estado='abierta').count()
-    total_empresas = Empresa.objects.filter(activa=True).count()
-    total_facultades = Facultad.objects.filter(activa=True).count()
+    total_practicas = Practica.objects.filter(estado='disponible').count()
+    total_internas = PracticaInterna.objects.filter(estado='disponible').count()
+    total_empresas = Empresa.objects.count()
+    total_facultades = Facultad.objects.count()
     
     response = "📊 **Estado Actual del Sistema:**\n\n"
     response += f"💼 Prácticas externas disponibles: {total_practicas}\n"

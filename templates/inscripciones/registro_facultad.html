@@ -10,9 +10,9 @@
             <div class="form-container">
                 <div class="form-header">
                     <h2>
-                        <i class="bi bi-mortarboard-fill"></i> Registro de Facultad ULEAM
+                        Registro de Facultad ULEAM
                     </h2>
-                    <p>Completa el formulario para registrar tu facultad y comenzar a publicar prácticas pre profesionales internas</p>
+                    <p>Completa el formulario para registrar una Facultad. Tu cuenta será revisada y aprobada por un administrador.</p>
                 </div>
                         
                         <form method="post" enctype="multipart/form-data">
@@ -22,7 +22,7 @@
                         <div class="row mb-4 mt-4">
                             <div class="col-12">
                                 <h5 class="title-uleam border-bottom pb-2 mb-3">
-                                    <i class="bi bi-mortarboard-fill"></i> Información de la Facultad
+                                    Información de la Facultad
                                 </h5>
                             </div>
                         </div>
@@ -67,7 +67,7 @@
                         <div class="row mb-4 mt-4">
                             <div class="col-12">
                                 <h5 class="subtitle-uleam border-bottom pb-2 mb-3">
-                                    <i class="bi bi-person-fill"></i> Información del Contacto
+                                    Información del Contacto
                                 </h5>
                             </div>
                         </div>
@@ -94,7 +94,7 @@
                         <div class="row mb-4 mt-4">
                             <div class="col-12">
                                 <h5 class="title-uleam border-bottom pb-2 mb-3">
-                                    <i class="bi bi-shield-lock-fill"></i> Información de Acceso
+                                    Información de Acceso
                                 </h5>
                             </div>
                         </div>
@@ -125,10 +125,10 @@
                         <!-- Botones -->
                         <div class="form-actions mt-4">
                             <button type="submit" class="btn-submit">
-                                <i class="bi bi-mortarboard-fill"></i> Registrar Facultad
+                                Registrar Facultad
                             </button>
                             <a href="{% url 'login' %}" class="btn-cancel">
-                                <i class="bi bi-box-arrow-in-right"></i> Ya tengo cuenta
+                                Ya tengo cuenta
                             </a>
                         </div>
                     </form>
@@ -136,4 +136,56 @@
         </div>
     </div>
 </div>
+
+<script>
+// Agregar botones de mostrar/ocultar contraseña
+document.addEventListener('DOMContentLoaded', function() {
+    const password1Input = document.querySelector('input[name="password1"]');
+    if (password1Input) {
+        addPasswordToggle(password1Input, 'password1');
+    }
+    
+    const password2Input = document.querySelector('input[name="password2"]');
+    if (password2Input) {
+        addPasswordToggle(password2Input, 'password2');
+    }
+});
+
+function addPasswordToggle(inputElement, inputId) {
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    inputElement.parentNode.insertBefore(wrapper, inputElement);
+    wrapper.appendChild(inputElement);
+    inputElement.style.paddingRight = '45px';
+    
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.onclick = function() { togglePassword(inputId); };
+    button.style.cssText = 'position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 5px;';
+    button.title = 'Mostrar/Ocultar contraseña';
+    
+    const icon = document.createElement('i');
+    icon.className = 'bi bi-eye-fill';
+    icon.id = inputId + '-icon';
+    icon.style.cssText = 'font-size: 1.2rem; color: var(--uleam-blue);';
+    
+    button.appendChild(icon);
+    wrapper.appendChild(button);
+}
+
+function togglePassword(inputId) {
+    const passwordInput = document.querySelector('input[name="' + inputId + '"]');
+    const icon = document.getElementById(inputId + '-icon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('bi-eye-fill');
+        icon.classList.add('bi-eye-slash-fill');
+    } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('bi-eye-slash-fill');
+        icon.classList.add('bi-eye-fill');
+    }
+}
+</script>
 {% endblock %}

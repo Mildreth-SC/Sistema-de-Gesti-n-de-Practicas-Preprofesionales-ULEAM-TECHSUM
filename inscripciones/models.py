@@ -21,11 +21,40 @@ class Carrera(models.Model):
 
 
 class Estudiante(models.Model):
+    TIPO_USUARIO_CHOICES = [
+        ('estudiante', 'Estudiante'),
+        ('egresado', 'Egresado'),
+    ]
+    
+    TIPO_TITULO_CHOICES = [
+        ('licenciatura', 'Licenciatura'),
+        ('ingenieria', 'Ingeniería'),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    tipo_usuario = models.CharField(
+        max_length=20,
+        choices=TIPO_USUARIO_CHOICES,
+        default='estudiante',
+        verbose_name='Tipo de Usuario'
+    )
     codigo_estudiante = models.CharField(max_length=20, unique=True)
     carrera = models.ForeignKey(Carrera, on_delete=models.CASCADE)
     ciclo_actual = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(12)]
+        validators=[MinValueValidator(1), MaxValueValidator(12)],
+        null=True,
+        blank=True,
+        verbose_name='Ciclo Actual',
+        help_text='Solo para estudiantes activos'
+    )
+    # Campo nuevo para egresados
+    tipo_titulo = models.CharField(
+        max_length=20,
+        choices=TIPO_TITULO_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name='Tipo de Título',
+        help_text='Solo para egresados'
     )
     telefono = models.CharField(max_length=15, blank=True)
     direccion = models.TextField(blank=True)
@@ -40,20 +69,71 @@ class Estudiante(models.Model):
         ordering = ['codigo_estudiante']
     
     def __str__(self):
-        return f"{self.user.get_full_name()} - {self.codigo_estudiante}"
+        tipo = "Egresado" if self.tipo_usuario == 'egresado' else "Estudiante"
+        return f"{self.user.get_full_name()} - {self.codigo_estudiante} ({tipo})"
 
 
 class Empresa(models.Model):
+    ESTADO_APROBACION_CHOICES = [
+        ('pendiente', 'Pendiente de Aprobación'),
+        ('aprobada', 'Aprobada'),
+        ('rechazada', 'Rechazada'),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     nombre = models.CharField(max_length=200)
-    ruc = models.CharField(max_length=11, unique=True)
+    ruc = models.CharField(max_length=13, unique=True, help_text="RUC debe terminar en 001")
     direccion = models.TextField()
+    latitud = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, help_text="Latitud para Google Maps")
+    longitud = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, help_text="Longitud para Google Maps")
     telefono = models.CharField(max_length=15)
     email = models.EmailField()
     contacto_responsable = models.CharField(max_length=100)
     sector = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True)
     logo = models.ImageField(upload_to='empresas/', blank=True, null=True)
+    
+    # Documentos legales requeridos
+    documento_constitucion = models.FileField(
+        upload_to='empresas/documentos/constitucion/',
+        help_text="Documento de constitución de la empresa (PDF)",
+        null=True,
+        blank=True
+    )
+    documento_ruc = models.FileField(
+        upload_to='empresas/documentos/ruc/',
+        help_text="Certificado de RUC (PDF)",
+        null=True,
+        blank=True
+    )
+    documento_representante = models.FileField(
+        upload_to='empresas/documentos/representante/',
+        help_text="Documento de identidad del representante legal (PDF)",
+        null=True,
+        blank=True
+    )
+    
+    # Sistema de aprobación
+    estado_aprobacion = models.CharField(
+        max_length=20,
+        choices=ESTADO_APROBACION_CHOICES,
+        default='pendiente',
+        help_text="Estado de aprobación por el administrador"
+    )
+    fecha_aprobacion = models.DateTimeField(null=True, blank=True)
+    aprobado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='empresas_aprobadas',
+        help_text="Administrador que aprobó el registro"
+    )
+    observaciones_aprobacion = models.TextField(
+        blank=True,
+        help_text="Comentarios del administrador sobre la aprobación/rechazo"
+    )
+    
     activa = models.BooleanField(default=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
     
@@ -64,6 +144,30 @@ class Empresa(models.Model):
     
     def __str__(self):
         return self.nombre
+    
+    def clean(self):
+        """Validar que el RUC termine en 001 y tenga 13 dígitos"""
+        super().clean()
+        if self.ruc:
+            # Verificar que solo contenga dígitos
+            if not self.ruc.isdigit():
+                raise ValidationError({
+                    'ruc': 'El RUC debe contener solo números'
+                })
+            # Verificar que tenga exactamente 13 dígitos
+            if len(self.ruc) != 13:
+                raise ValidationError({
+                    'ruc': 'El RUC debe tener exactamente 13 dígitos'
+                })
+            # Verificar que termine en 001
+            if not self.ruc.endswith('001'):
+                raise ValidationError({
+                    'ruc': 'El RUC de una empresa debe terminar en 001'
+                })
+    
+    def puede_acceder(self):
+        """Verificar si la empresa puede acceder al sistema"""
+        return self.estado_aprobacion == 'aprobada' and self.activa
 
 
 class Practica(models.Model):
@@ -74,15 +178,52 @@ class Practica(models.Model):
         ('cancelada', 'Cancelada'),
     ]
     
+    MODALIDAD_CHOICES = [
+        ('presencial', 'Presencial'),
+        ('remoto', 'Remoto'),
+        ('hibrido', 'Híbrido'),
+    ]
+    
+    AREA_CHOICES = [
+        ('tecnologia', 'Tecnología e Informática'),
+        ('salud', 'Ciencias de la Salud'),
+        ('educacion', 'Educación'),
+        ('administracion', 'Administración y Negocios'),
+        ('ingenieria', 'Ingeniería'),
+        ('derecho', 'Derecho y Ciencias Jurídicas'),
+        ('comunicacion', 'Comunicación y Marketing'),
+        ('turismo', 'Turismo y Hotelería'),
+        ('agronomia', 'Agronomía y Veterinaria'),
+        ('arte', 'Arte y Diseño'),
+        ('otro', 'Otro'),
+    ]
+    
+    DIRIGIDO_A_CHOICES = [
+        ('estudiantes', 'Solo Estudiantes Activos'),
+        ('egresados', 'Solo Egresados'),
+        ('ambos', 'Estudiantes y Egresados'),
+    ]
+    
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
     titulo = models.CharField(max_length=200)
+    area = models.CharField(max_length=50, choices=AREA_CHOICES, default='otro', help_text="Área académica de la práctica")
     descripcion = models.TextField()
     requisitos = models.TextField()
+    modalidad = models.CharField(max_length=20, choices=MODALIDAD_CHOICES, default='presencial', help_text="Modalidad de trabajo")
+    dirigido_a = models.CharField(
+        max_length=20,
+        choices=DIRIGIDO_A_CHOICES,
+        default='ambos',
+        verbose_name='Dirigido a',
+        help_text="Tipo de postulante que puede aplicar"
+    )
     duracion_semanas = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(52)]
+        validators=[MinValueValidator(1), MaxValueValidator(52)],
+        help_text="Duración en semanas (1-52)"
     )
     horas_semana = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(40)]
+        validators=[MinValueValidator(1), MaxValueValidator(40)],
+        help_text="Horas por semana (1-40)"
     )
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
@@ -198,16 +339,66 @@ class DocumentoInscripcion(models.Model):
 
 
 class Facultad(models.Model):
+    ESTADO_APROBACION_CHOICES = [
+        ('pendiente', 'Pendiente de Aprobación'),
+        ('aprobada', 'Aprobada'),
+        ('rechazada', 'Rechazada'),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     nombre = models.CharField(max_length=200)
     codigo = models.CharField(max_length=10, unique=True)
     decano = models.CharField(max_length=100)
     direccion = models.TextField()
+    latitud = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, help_text="Latitud para Google Maps")
+    longitud = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, help_text="Longitud para Google Maps")
     telefono = models.CharField(max_length=15)
     email = models.EmailField()
     contacto_responsable = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True)
     logo = models.ImageField(upload_to='facultades/', blank=True, null=True)
+    
+    # Documentos de autorización
+    documento_autorizacion = models.FileField(
+        upload_to='facultades/documentos/autorizacion/',
+        help_text="Documento de autorización institucional (PDF)",
+        null=True,
+        blank=True
+    )
+    documento_resolucion = models.FileField(
+        upload_to='facultades/documentos/resolucion/',
+        help_text="Resolución de creación de la facultad (PDF)",
+        null=True,
+        blank=True
+    )
+    documento_representante = models.FileField(
+        upload_to='facultades/documentos/representante/',
+        help_text="Documento de identidad del decano/responsable (PDF)",
+        null=True,
+        blank=True
+    )
+    
+    # Sistema de aprobación
+    estado_aprobacion = models.CharField(
+        max_length=20,
+        choices=ESTADO_APROBACION_CHOICES,
+        default='pendiente',
+        help_text="Estado de aprobación por el administrador"
+    )
+    fecha_aprobacion = models.DateTimeField(null=True, blank=True)
+    aprobado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='facultades_aprobadas',
+        help_text="Administrador que aprobó el registro"
+    )
+    observaciones_aprobacion = models.TextField(
+        blank=True,
+        help_text="Comentarios del administrador sobre la aprobación/rechazo"
+    )
+    
     activa = models.BooleanField(default=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
     
@@ -218,6 +409,10 @@ class Facultad(models.Model):
     
     def __str__(self):
         return self.nombre
+    
+    def puede_acceder(self):
+        """Verificar si la facultad puede acceder al sistema"""
+        return self.estado_aprobacion == 'aprobada' and self.activa
 
 
 class PracticaInterna(models.Model):
@@ -237,16 +432,36 @@ class PracticaInterna(models.Model):
         ('otro', 'Otro'),
     ]
     
+    MODALIDAD_CHOICES = [
+        ('presencial', 'Presencial'),
+        ('remoto', 'Remoto'),
+        ('hibrido', 'Híbrido'),
+    ]
+    
     facultad = models.ForeignKey(Facultad, on_delete=models.CASCADE)
     titulo = models.CharField(max_length=200)
     descripcion = models.TextField()
     tipo_servicio = models.CharField(max_length=20, choices=TIPO_SERVICIO_CHOICES)
     requisitos = models.TextField()
+    modalidad = models.CharField(max_length=20, choices=MODALIDAD_CHOICES, default='presencial', help_text="Modalidad de trabajo")
+    dirigido_a = models.CharField(
+        max_length=20,
+        choices=[
+            ('estudiantes', 'Solo Estudiantes Activos'),
+            ('egresados', 'Solo Egresados'),
+            ('ambos', 'Estudiantes y Egresados'),
+        ],
+        default='ambos',
+        verbose_name='Dirigido a',
+        help_text="Tipo de postulante que puede aplicar"
+    )
     duracion_semanas = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(52)]
+        validators=[MinValueValidator(1), MaxValueValidator(52)],
+        help_text="Duración en semanas (1-52)"
     )
     horas_semana = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(40)]
+        validators=[MinValueValidator(1), MaxValueValidator(40)],
+        help_text="Horas por semana (1-40)"
     )
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
@@ -419,3 +634,96 @@ class Calificacion(models.Model):
                 if valor == self.valor:
                     return descripcion
         return self.valor
+
+
+class Notificacion(models.Model):
+    """
+    Modelo para notificaciones de eventos importantes como:
+    - Aprobación en prácticas
+    - Rechazo de postulaciones
+    - Actualizaciones de estado
+    """
+    TIPO_NOTIFICACION_CHOICES = [
+        ('aprobacion_practica', '¡Felicidades! Has sido seleccionado'),
+        ('rechazo_practica', 'Postulación no aceptada'),
+        ('cancelacion_practica', 'Práctica cancelada'),
+        ('actualizacion', 'Actualización de estado'),
+        ('recordatorio', 'Recordatorio'),
+    ]
+    
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='notificaciones',
+        help_text="Usuario que recibe la notificación"
+    )
+    tipo = models.CharField(
+        max_length=50,
+        choices=TIPO_NOTIFICACION_CHOICES,
+        default='actualizacion'
+    )
+    titulo = models.CharField(max_length=200, help_text="Título de la notificación")
+    mensaje = models.TextField(help_text="Mensaje completo de la notificación")
+    
+    # Relaciones opcionales
+    inscripcion = models.ForeignKey(
+        'Inscripcion',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="Inscripción relacionada (práctica externa)"
+    )
+    inscripcion_interna = models.ForeignKey(
+        'InscripcionInterna',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="Inscripción relacionada (práctica interna)"
+    )
+    
+    # Control
+    leida = models.BooleanField(default=False, help_text="Marca si la notificación fue leída")
+    mostrada = models.BooleanField(default=False, help_text="Marca si se mostró el modal")
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_lectura = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = "Notificación"
+        verbose_name_plural = "Notificaciones"
+        ordering = ['-fecha_creacion']
+        indexes = [
+            models.Index(fields=['usuario', 'leida']),
+            models.Index(fields=['usuario', 'mostrada']),
+        ]
+    
+    def __str__(self):
+        return f"{self.usuario.username} - {self.titulo} ({'Leída' if self.leida else 'No leída'})"
+    
+    def marcar_leida(self):
+        """Marca la notificación como leída"""
+        if not self.leida:
+            self.leida = True
+            self.fecha_lectura = timezone.now()
+            self.save(update_fields=['leida', 'fecha_lectura'])
+    
+    def marcar_mostrada(self):
+        """Marca que el modal fue mostrado"""
+        if not self.mostrada:
+            self.mostrada = True
+            self.save(update_fields=['mostrada'])
+    
+    def get_practica_nombre(self):
+        """Obtiene el nombre de la práctica relacionada"""
+        if self.inscripcion:
+            return self.inscripcion.practica.titulo
+        elif self.inscripcion_interna:
+            return self.inscripcion_interna.practica_interna.titulo
+        return "Práctica"
+    
+    def get_empresa_o_facultad(self):
+        """Obtiene el nombre de la empresa o facultad"""
+        if self.inscripcion:
+            return self.inscripcion.practica.empresa.nombre
+        elif self.inscripcion_interna:
+            return self.inscripcion_interna.practica_interna.facultad.nombre
+        return ""

@@ -5,17 +5,47 @@ from .models import Estudiante, Empresa, Practica, Inscripcion, DocumentoInscrip
 
 
 class EmpresaRegistrationForm(UserCreationForm):
+    SECTOR_CHOICES = [
+        ('', 'Seleccione un sector'),
+        ('tecnologia', 'Tecnología e Informática'),
+        ('salud', 'Salud y Medicina'),
+        ('educacion', 'Educación'),
+        ('construccion', 'Construcción e Ingeniería'),
+        ('manufactura', 'Manufactura e Industria'),
+        ('comercio', 'Comercio y Retail'),
+        ('servicios', 'Servicios Profesionales'),
+        ('finanzas', 'Finanzas y Banca'),
+        ('turismo', 'Turismo y Hospitalidad'),
+        ('agricultura', 'Agricultura y Ganadería'),
+        ('transporte', 'Transporte y Logística'),
+        ('comunicacion', 'Comunicación y Medios'),
+        ('energia', 'Energía y Recursos Naturales'),
+        ('inmobiliaria', 'Sector Inmobiliario'),
+        ('alimentos', 'Alimentos y Bebidas'),
+        ('otro', 'Otro'),
+    ]
+    
     email = forms.EmailField(required=True)
     first_name = forms.CharField(max_length=30, required=True, label="Nombre del Contacto")
     last_name = forms.CharField(max_length=30, required=True, label="Apellido del Contacto")
     
     # Campos específicos de la empresa
     nombre = forms.CharField(max_length=200, required=True, label="Nombre de la Empresa")
-    ruc = forms.CharField(max_length=11, required=True, label="RUC")
+    ruc = forms.CharField(
+        max_length=13, 
+        required=True, 
+        label="RUC",
+        help_text="El RUC debe tener 13 dígitos numéricos y terminar en 001"
+    )
     direccion = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=True, label="Dirección")
     telefono = forms.CharField(max_length=15, required=True, label="Teléfono")
     contacto_responsable = forms.CharField(max_length=100, required=True, label="Nombre del Responsable")
-    sector = forms.CharField(max_length=100, required=True, label="Sector")
+    sector = forms.ChoiceField(
+        choices=SECTOR_CHOICES,
+        required=True,
+        label="Sector",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
     descripcion = forms.CharField(widget=forms.Textarea(attrs={'rows': 4}), required=False, label="Descripción")
     logo = forms.ImageField(required=False, label="Logo de la Empresa")
 
@@ -33,6 +63,16 @@ class EmpresaRegistrationForm(UserCreationForm):
 
     def clean_ruc(self):
         ruc = self.cleaned_data['ruc']
+        # Validar que solo contenga dígitos
+        if not ruc.isdigit():
+            raise forms.ValidationError("El RUC debe contener solo números.")
+        # Validar que tenga exactamente 13 dígitos
+        if len(ruc) != 13:
+            raise forms.ValidationError("El RUC debe tener exactamente 13 dígitos.")
+        # Validar que termine en 001
+        if not ruc.endswith('001'):
+            raise forms.ValidationError("El RUC de una empresa debe terminar en 001.")
+        # Validar que no exista
         if Empresa.objects.filter(ruc=ruc).exists():
             raise forms.ValidationError("Ya existe una empresa registrada con este RUC.")
         return ruc
@@ -61,7 +101,9 @@ class EmpresaRegistrationForm(UserCreationForm):
                 contacto_responsable=self.cleaned_data['contacto_responsable'],
                 sector=self.cleaned_data['sector'],
                 descripcion=self.cleaned_data['descripcion'],
-                logo=self.cleaned_data['logo']
+                logo=self.cleaned_data.get('logo'),
+                # Estado inicial: pendiente de aprobación por el administrador
+                estado_aprobacion='pendiente'
             )
         return user
 
@@ -123,26 +165,99 @@ class FacultadRegistrationForm(UserCreationForm):
                 email=self.cleaned_data['email'],
                 contacto_responsable=self.cleaned_data['contacto_responsable'],
                 descripcion=self.cleaned_data['descripcion'],
-                logo=self.cleaned_data['logo']
+                logo=self.cleaned_data.get('logo'),
+                # Estado inicial: pendiente de aprobación por el administrador
+                estado_aprobacion='pendiente'
             )
         return user
 
 
 class EstudianteRegistrationForm(UserCreationForm):
-    email = forms.EmailField(required=True)
-    first_name = forms.CharField(max_length=30, required=True)
-    last_name = forms.CharField(max_length=30, required=True)
-    codigo_estudiante = forms.CharField(max_length=20, required=True)
-    carrera = forms.ModelChoiceField(queryset=Carrera.objects.filter(activa=True), required=True)
-    ciclo_actual = forms.IntegerField(min_value=1, max_value=12, required=True)
-    telefono = forms.CharField(max_length=15, required=False)
-    direccion = forms.CharField(widget=forms.Textarea, required=False)
-    fecha_nacimiento = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=False)
-    foto = forms.ImageField(required=False)
+    email = forms.EmailField(required=True, label='Correo Electrónico')
+    first_name = forms.CharField(max_length=30, required=True, label='Nombres')
+    last_name = forms.CharField(max_length=30, required=True, label='Apellidos')
+    
+    tipo_usuario = forms.ChoiceField(
+        choices=[
+            ('estudiante', 'Estudiante Activo'),
+            ('egresado', 'Egresado')
+        ],
+        required=True,
+        label='¿Eres estudiante o egresado?',
+        widget=forms.RadioSelect,
+        initial='estudiante'
+    )
+    
+    codigo_estudiante = forms.CharField(
+        max_length=20, 
+        required=True,
+        label='Código de Estudiante',
+        help_text='Tu código único de estudiante'
+    )
+    
+    carrera = forms.ModelChoiceField(
+        queryset=Carrera.objects.filter(activa=True), 
+        required=True,
+        label='Carrera'
+    )
+    
+    ciclo_actual = forms.IntegerField(
+        min_value=1, 
+        max_value=12, 
+        required=False,
+        label='Ciclo Actual',
+        help_text='Solo para estudiantes activos'
+    )
+    
+    tipo_titulo = forms.ChoiceField(
+        choices=[
+            ('', 'Seleccione...'),
+            ('licenciatura', 'Licenciatura'),
+            ('ingenieria', 'Ingeniería')
+        ],
+        required=False,
+        label='Tipo de Título',
+        help_text='Solo para egresados'
+    )
+    
+    telefono = forms.CharField(max_length=15, required=False, label='Teléfono')
+    direccion = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=False, label='Dirección')
+    fecha_nacimiento = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date'}), 
+        required=False,
+        label='Fecha de Nacimiento'
+    )
+    foto = forms.ImageField(required=False, label='Foto de Perfil')
 
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        tipo_usuario = cleaned_data.get('tipo_usuario')
+        ciclo_actual = cleaned_data.get('ciclo_actual')
+        tipo_titulo = cleaned_data.get('tipo_titulo')
+        
+        # Validar que estudiantes tengan ciclo actual
+        if tipo_usuario == 'estudiante' and not ciclo_actual:
+            self.add_error('ciclo_actual', 'Los estudiantes activos deben indicar su ciclo actual.')
+        
+        # Validar que egresados tengan tipo de título
+        if tipo_usuario == 'egresado' and not tipo_titulo:
+            self.add_error('tipo_titulo', 'Los egresados deben indicar su tipo de título.')
+        
+        return cleaned_data
+    
+    def clean_codigo_estudiante(self):
+        codigo = self.cleaned_data.get('codigo_estudiante')
+        # Verificar si ya existe un estudiante con este código
+        if Estudiante.objects.filter(codigo_estudiante=codigo).exists():
+            raise forms.ValidationError(
+                f'Ya existe un estudiante registrado con el código {codigo}. '
+                'Por favor, verifica tu código o contacta al administrador.'
+            )
+        return codigo
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -154,13 +269,15 @@ class EstudianteRegistrationForm(UserCreationForm):
             user.save()
             Estudiante.objects.create(
                 user=user,
-                codigo_estudiante=self.cleaned_data['codigo_estudiante'],
-                carrera=self.cleaned_data['carrera'],
-                ciclo_actual=self.cleaned_data['ciclo_actual'],
-                telefono=self.cleaned_data['telefono'],
-                direccion=self.cleaned_data['direccion'],
-                fecha_nacimiento=self.cleaned_data['fecha_nacimiento'],
-                foto=self.cleaned_data['foto']
+                tipo_usuario=self.cleaned_data.get('tipo_usuario'),
+                codigo_estudiante=self.cleaned_data.get('codigo_estudiante'),
+                carrera=self.cleaned_data.get('carrera'),
+                ciclo_actual=self.cleaned_data.get('ciclo_actual') if self.cleaned_data.get('tipo_usuario') == 'estudiante' else None,
+                tipo_titulo=self.cleaned_data.get('tipo_titulo') if self.cleaned_data.get('tipo_usuario') == 'egresado' else None,
+                telefono=self.cleaned_data.get('telefono', ''),
+                direccion=self.cleaned_data.get('direccion', ''),
+                fecha_nacimiento=self.cleaned_data.get('fecha_nacimiento'),
+                foto=self.cleaned_data.get('foto')
             )
         return user
 
@@ -190,7 +307,7 @@ class UserUpdateForm(forms.ModelForm):
 class EstudianteUpdateForm(forms.ModelForm):
     class Meta:
         model = Estudiante
-        fields = ['codigo_estudiante', 'carrera', 'ciclo_actual', 'telefono', 'direccion', 'fecha_nacimiento', 'foto']
+        fields = ['codigo_estudiante', 'carrera', 'ciclo_actual', 'tipo_titulo', 'telefono', 'direccion', 'fecha_nacimiento', 'foto']
         widgets = {
             'fecha_nacimiento': forms.DateInput(attrs={'type': 'date'}),
             'direccion': forms.Textarea(attrs={'rows': 3}),
@@ -199,6 +316,18 @@ class EstudianteUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['carrera'].queryset = Carrera.objects.filter(activa=True)
+        
+        # Hacer los campos opcionales según el tipo de usuario
+        instance = kwargs.get('instance')
+        if instance:
+            if instance.tipo_usuario == 'estudiante':
+                self.fields['ciclo_actual'].required = True
+                self.fields['tipo_titulo'].required = False
+                self.fields['tipo_titulo'].widget = forms.HiddenInput()
+            elif instance.tipo_usuario == 'egresado':
+                self.fields['ciclo_actual'].required = False
+                self.fields['ciclo_actual'].widget = forms.HiddenInput()
+                self.fields['tipo_titulo'].required = True
 
 
 class EmpresaForm(forms.ModelForm):
@@ -213,7 +342,7 @@ class EmpresaForm(forms.ModelForm):
 class PracticaForm(forms.ModelForm):
     class Meta:
         model = Practica
-        fields = ['titulo', 'descripcion', 'requisitos', 'duracion_semanas', 'horas_semana', 
+        fields = ['titulo', 'area', 'modalidad', 'dirigido_a', 'descripcion', 'requisitos', 'duracion_semanas', 'horas_semana', 
                  'fecha_inicio', 'fecha_fin', 'cupos_totales', 'fecha_limite_inscripcion']
         widgets = {
             'fecha_inicio': forms.DateInput(attrs={'type': 'date'}),
@@ -221,6 +350,9 @@ class PracticaForm(forms.ModelForm):
             'fecha_limite_inscripcion': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
             'descripcion': forms.Textarea(attrs={'rows': 4}),
             'requisitos': forms.Textarea(attrs={'rows': 4}),
+            'area': forms.Select(attrs={'class': 'form-control'}),
+            'modalidad': forms.Select(attrs={'class': 'form-control'}),
+            'dirigido_a': forms.Select(attrs={'class': 'form-control'}),
         }
 
 
@@ -268,7 +400,7 @@ class BusquedaPracticasForm(forms.Form):
 class PracticaInternaForm(forms.ModelForm):
     class Meta:
         model = PracticaInterna
-        fields = ['titulo', 'descripcion', 'tipo_servicio', 'requisitos', 'duracion_semanas', 'horas_semana', 
+        fields = ['titulo', 'descripcion', 'tipo_servicio', 'modalidad', 'dirigido_a', 'requisitos', 'duracion_semanas', 'horas_semana', 
                  'fecha_inicio', 'fecha_fin', 'cupos_totales', 'fecha_limite_inscripcion', 'beneficios']
         widgets = {
             'fecha_inicio': forms.DateInput(attrs={'type': 'date'}),
@@ -277,6 +409,8 @@ class PracticaInternaForm(forms.ModelForm):
             'descripcion': forms.Textarea(attrs={'rows': 4}),
             'requisitos': forms.Textarea(attrs={'rows': 4}),
             'beneficios': forms.Textarea(attrs={'rows': 3}),
+            'modalidad': forms.Select(attrs={'class': 'form-control'}),
+            'dirigido_a': forms.Select(attrs={'class': 'form-control'}),
         }
 
 

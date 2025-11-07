@@ -163,14 +163,14 @@
                                 {% else %}
                                     <div class="alert alert-warning">
                                         <i class="bi bi-exclamation-triangle"></i>
-                                        <strong>Solo estudiantes</strong>
-                                        <p class="mb-0">Solo los estudiantes pueden inscribirse en prácticas.</p>
+                                        <strong>Solo estudiantes y egresados</strong>
+                                        <p class="mb-0">Solo los estudiantes y egresados pueden inscribirse en prácticas.</p>
                                     </div>
                                 {% endif %}
                             {% else %}
                                 <div class="alert alert-info">
                                     <i class="bi bi-info-circle"></i>
-                                    <p class="mb-2">Debes iniciar sesión como estudiante para inscribirte.</p>
+                                    <p class="mb-2">Debes iniciar sesión como estudiante o egresado para inscribirte.</p>
                                     <a href="{% url 'login' %}" class="btn btn-success btn-sm">
                                         <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
                                     </a>
