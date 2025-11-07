@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'storages',  # Para custom storage backends
     'inscripciones',
     'crispy_forms',
     'crispy_bootstrap5',
@@ -244,6 +245,19 @@ else:
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Configuración de Supabase Storage para archivos media
+SUPABASE_URL = config('SUPABASE_URL', default='')
+SUPABASE_SERVICE_ROLE_KEY = config('SUPABASE_SERVICE_ROLE_KEY', default='')
+SUPABASE_BUCKET_NAME = 'media'  # Nombre del bucket en Supabase Storage
+
+# Usar Supabase Storage en producción, filesystem en desarrollo
+if not DEBUG and SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
+    # Producción: Usar Supabase Storage
+    DEFAULT_FILE_STORAGE = 'supabase_storage.SupabaseStorage'
+else:
+    # Desarrollo: Usar filesystem local
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 # Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
