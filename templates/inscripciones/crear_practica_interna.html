@@ -1,0 +1,31 @@
+{% extends 'inscripciones/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Crear Práctica Interna - {{ facultad.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="form-container">
+        <div class="form-header">
+            <h2>
+                <i class="bi bi-plus-circle"></i> Crear Nueva Práctica Interna
+            </h2>
+            <p>Facultad: <strong style="color: var(--uleam-green);">{{ facultad.nombre }}</strong></p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form|crispy }}
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">
+                    <i class="bi bi-save"></i> Crear Práctica
+                </button>
+                <a href="{% url 'panel_facultad' %}" class="btn-cancel">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

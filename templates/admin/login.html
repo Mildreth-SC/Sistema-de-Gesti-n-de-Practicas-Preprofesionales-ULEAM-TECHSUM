@@ -1,0 +1,256 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static "admin/css/login.css" %}">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+{{ form.media }}
+<style>
+    body {
+        background: linear-gradient(135deg, rgba(196, 30, 58, 0.1) 0%, rgba(34, 139, 34, 0.1) 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .login {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        max-width: 450px;
+        width: 100%;
+        margin: 2rem auto;
+    }
+    
+    .login #header {
+        background: linear-gradient(135deg, #C41E3A 0%, #228B22 100%);
+        padding: 2.5rem 2rem;
+        text-align: center;
+    }
+    
+    .login #header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.3;
+    }
+    
+    .login #header h1 a {
+        color: white !important;
+        text-decoration: none;
+    }
+    
+    .login #content {
+        padding: 2.5rem 2rem;
+    }
+    
+    .login .form-row {
+        margin-bottom: 1.5rem;
+    }
+    
+    .login .form-row label {
+        color: #C41E3A;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .login .form-row label::before {
+        font-family: "bootstrap-icons";
+        font-size: 1.1rem;
+        color: #228B22;
+    }
+    
+    .login .form-row:first-of-type label::before {
+        content: "\f4da"; /* bi-person-fill */
+    }
+    
+    .login .form-row:nth-of-type(2) label::before {
+        content: "\f475"; /* bi-lock-fill */
+    }
+    
+    .login form input[type="text"],
+    .login form input[type="password"] {
+        width: 100%;
+        border: 2px solid #E0E0E0;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background-color: #FAFAFA;
+        box-sizing: border-box;
+    }
+    
+    .login form input[type="text"]:focus,
+    .login form input[type="password"]:focus {
+        border-color: #C41E3A;
+        box-shadow: 0 0 0 0.2rem rgba(196, 30, 58, 0.15);
+        background-color: white;
+        outline: none;
+    }
+    
+    .login .submit-row {
+        background: transparent;
+        padding: 1.5rem 0 0 0;
+        text-align: center;
+        border: none;
+    }
+    
+    .login input[type="submit"] {
+        background: linear-gradient(135deg, #C41E3A 0%, #228B22 100%);
+        border: none;
+        border-radius: 30px;
+        padding: 12px 40px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(196, 30, 58, 0.3);
+        cursor: pointer;
+        width: 100%;
+        color: white;
+    }
+    
+    .login input[type="submit"]:hover {
+        background: linear-gradient(135deg, #228B22 0%, #C41E3A 100%);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(196, 30, 58, 0.4);
+    }
+    
+    .login input[type="submit"]:active {
+        transform: translateY(-1px);
+    }
+    
+    .errornote {
+        background: linear-gradient(135deg, rgba(196, 30, 58, 0.1), rgba(196, 30, 58, 0.05));
+        color: #C41E3A;
+        border-left: 4px solid #C41E3A;
+        border-radius: 10px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+    }
+    
+    .password-reset-link {
+        text-align: center;
+        margin-top: 1rem;
+    }
+    
+    .password-reset-link a {
+        color: #6C757D;
+        font-size: 0.9rem;
+        text-decoration: none;
+    }
+    
+    .password-reset-link a:hover {
+        color: #C41E3A;
+    }
+    
+    .login-info {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid #F8F9FA;
+    }
+    
+    .login-info p {
+        color: #6C757D;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    .login-info a {
+        color: #1E3A8A;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .login-info a:hover {
+        color: #C41E3A;
+    }
+    
+    .login-info a::before {
+        font-family: "bootstrap-icons";
+        content: "\f144"; /* bi-arrow-left */
+    }
+</style>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} login{% endblock %}
+
+{% block usertools %}{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+{% if form.errors and not form.non_field_errors %}
+<p class="errornote">
+{% if form.errors.items|length == 1 %}
+    {% trans "Please correct the error below." %}
+{% else %}
+    {% trans "Please correct the errors below." %}
+{% endif %}
+</p>
+{% endif %}
+
+{% if form.non_field_errors %}
+{% for error in form.non_field_errors %}
+<p class="errornote">
+    {{ error }}
+</p>
+{% endfor %}
+{% endif %}
+
+<div id="content-main">
+
+{% if user.is_authenticated %}
+<p class="errornote">
+{% blocktrans trimmed %}
+    You are authenticated as {{ username }}, but are not authorized to
+    access this page. Would you like to login to a different account?
+{% endblocktrans %}
+</p>
+{% endif %}
+
+<form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
+  <div class="form-row">
+    {{ form.username.errors }}
+    {{ form.username.label_tag }} {{ form.username }}
+  </div>
+  <div class="form-row">
+    {{ form.password.errors }}
+    {{ form.password.label_tag }} {{ form.password }}
+    <input type="hidden" name="next" value="{{ next }}">
+  </div>
+  {% url 'admin_password_reset' as password_reset_url %}
+  {% if password_reset_url %}
+  <div class="password-reset-link">
+    <a href="{{ password_reset_url }}">{% trans 'Forgotten your password or username?' %}</a>
+  </div>
+  {% endif %}
+  <div class="submit-row">
+    <input type="submit" value="{% trans 'Log in' %}">
+  </div>
+</form>
+
+<div class="login-info">
+    <p style="color: #6C757D; margin-bottom: 0.5rem;">¿No eres administrador?</p>
+    <a href="{% url 'login' %}">
+        <i class="bi bi-arrow-left"></i> Volver al Sistema de Prácticas
+    </a>
+</div>
+
+</div>
+{% endblock %}

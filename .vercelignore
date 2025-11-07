@@ -1,0 +1,39 @@
+# Archivos Python
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Entornos virtuales
+venv/
+env/
+ENV/
+.venv
+
+# Base de datos local
+*.sqlite3
+db.sqlite3
+
+# Archivos de entorno
+.env
+.env.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de prueba
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Archivos de despliegue locales
+*.log

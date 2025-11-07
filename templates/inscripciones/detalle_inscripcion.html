@@ -1,0 +1,231 @@
+{% extends 'inscripciones/base.html' %}
+
+{% block title %}Detalle de Inscripción - {{ inscripcion.practica.titulo }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'mis_inscripciones' %}">Mis Inscripciones</a></li>
+            <li class="breadcrumb-item active">Detalle</li>
+        </ol>
+    </nav>
+    
+    <!-- Estado de la Inscripción -->
+    <div class="row mb-4">
+        <div class="col-12">
+            {% if inscripcion.estado == 'pendiente' %}
+                <div class="alert alert-warning" role="alert">
+                    <i class="bi bi-clock"></i> <strong>Inscripción Pendiente</strong>
+                    <p class="mb-0">Tu inscripción está siendo evaluada. Te notificaremos cuando haya una actualización.</p>
+                </div>
+            {% elif inscripcion.estado == 'aprobada' %}
+                <div class="alert alert-success" role="alert">
+                    <i class="bi bi-check-circle"></i> <strong>¡Inscripción Aprobada!</strong>
+                    <p class="mb-0">Felicitaciones, has sido seleccionado para esta práctica.</p>
+                </div>
+            {% elif inscripcion.estado == 'rechazada' %}
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-x-circle"></i> <strong>Inscripción Rechazada</strong>
+                    <p class="mb-0">Tu inscripción no fue seleccionada para esta ocasión.</p>
+                </div>
+            {% elif inscripcion.estado == 'cancelada' %}
+                <div class="alert alert-secondary" role="alert">
+                    <i class="bi bi-dash-circle"></i> <strong>Inscripción Cancelada</strong>
+                    <p class="mb-0">Has cancelado tu inscripción a esta práctica.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Información de la Práctica -->
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-briefcase"></i> {{ inscripcion.practica.titulo }}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="text-primary">
+                                <i class="bi bi-building"></i> Empresa
+                            </h5>
+                            <p>{{ inscripcion.practica.empresa.nombre }}</p>
+                            
+                            <h5 class="text-primary">
+                                <i class="bi bi-tag"></i> Sector
+                            </h5>
+                            <p>{{ inscripcion.practica.empresa.sector }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-primary">
+                                <i class="bi bi-calendar-week"></i> Duración
+                            </h5>
+                            <p>{{ inscripcion.practica.duracion_semanas }} semanas</p>
+                            
+                            <h5 class="text-primary">
+                                <i class="bi bi-clock"></i> Horas por Semana
+                            </h5>
+                            <p>{{ inscripcion.practica.horas_semana }} horas</p>
+                        </div>
+                    </div>
+                    
+                    <h5 class="text-primary">
+                        <i class="bi bi-file-text"></i> Descripción
+                    </h5>
+                    <p>{{ inscripcion.practica.descripcion|linebreaks }}</p>
+                    
+                    <h5 class="text-primary">
+                        <i class="bi bi-list-check"></i> Requisitos
+                    </h5>
+                    <p>{{ inscripcion.practica.requisitos|linebreaks }}</p>
+                </div>
+            </div>
+            
+            <!-- Información de la Inscripción -->
+            <div class="card shadow mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Información de Inscripción
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong>Fecha de Inscripción:</strong><br>
+                            {{ inscripcion.fecha_inscripcion|date:"d/m/Y H:i" }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong>Fecha de Inicio:</strong><br>
+                            {{ inscripcion.practica.fecha_inicio|date:"d/m/Y" }}
+                        </div>
+                        {% if inscripcion.fecha_evaluacion %}
+                            <div class="col-md-6 mb-3">
+                                <strong>Fecha de Evaluación:</strong><br>
+                                {{ inscripcion.fecha_evaluacion|date:"d/m/Y H:i" }}
+                            </div>
+                        {% endif %}
+                        {% if inscripcion.evaluado_por %}
+                            <div class="col-md-6 mb-3">
+                                <strong>Evaluado por:</strong><br>
+                                {{ inscripcion.evaluado_por.get_full_name }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if inscripcion.observaciones %}
+                        <hr>
+                        <h6 class="text-primary">Observaciones:</h6>
+                        <p class="mb-0">{{ inscripcion.observaciones }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Panel Lateral -->
+        <div class="col-lg-4">
+            <!-- Documentos -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark"></i> Documentos
+                        <span class="badge bg-light text-dark ms-2">{{ documentos.count }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if documentos %}
+                        <ul class="list-group list-group-flush">
+                            {% for documento in documentos %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>
+                                        {% if documento.tipo == 'cv' %}
+                                            <i class="bi bi-file-person text-primary"></i>
+                                        {% elif documento.tipo == 'carta_presentacion' %}
+                                            <i class="bi bi-file-text text-info"></i>
+                                        {% elif documento.tipo == 'certificado_notas' %}
+                                            <i class="bi bi-file-check text-success"></i>
+                                        {% else %}
+                                            <i class="bi bi-file text-secondary"></i>
+                                        {% endif %}
+                                        {{ documento.nombre }}
+                                    </span>
+                                    <a href="{{ documento.archivo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted text-center py-3">No hay documentos</p>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2 mt-3">
+                        <a href="{% url 'gestionar_documentos' inscripcion.pk %}" class="btn btn-info">
+                            <i class="bi bi-cloud-upload"></i> Gestionar Documentos
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Acciones -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning"></i> Acciones
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'detalle_practica' inscripcion.practica.pk %}" class="btn btn-outline-primary">
+                            <i class="bi bi-eye"></i> Ver Práctica
+                        </a>
+                        <a href="{% url 'detalle_empresa' inscripcion.practica.empresa.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-building"></i> Ver Empresa
+                        </a>
+                        {% if inscripcion.estado == 'pendiente' %}
+                            <a href="{% url 'cancelar_inscripcion' inscripcion.pk %}" class="btn btn-outline-danger" 
+                               onclick="return confirm('¿Estás seguro de cancelar esta inscripción?')">
+                                <i class="bi bi-x-circle"></i> Cancelar Inscripción
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Estado -->
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-square"></i> Estado Actual
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    {% if inscripcion.estado == 'pendiente' %}
+                        <i class="bi bi-clock text-warning" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3">Pendiente</h5>
+                        <p class="text-muted">En evaluación</p>
+                    {% elif inscripcion.estado == 'aprobada' %}
+                        <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3">Aprobada</h5>
+                        <p class="text-muted">¡Felicitaciones!</p>
+                    {% elif inscripcion.estado == 'rechazada' %}
+                        <i class="bi bi-x-circle text-danger" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3">Rechazada</h5>
+                        <p class="text-muted">No seleccionada</p>
+                    {% else %}
+                        <i class="bi bi-dash-circle text-secondary" style="font-size: 3rem;"></i>
+                        <h5 class="mt-3">Cancelada</h5>
+                        <p class="text-muted">Inscripción cancelada</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

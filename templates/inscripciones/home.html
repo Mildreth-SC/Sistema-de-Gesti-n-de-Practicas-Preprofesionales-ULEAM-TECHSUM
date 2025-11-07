@@ -1,0 +1,537 @@
+﻿{% extends 'inscripciones/base.html' %}
+
+{% block title %}Inicio - Sistema de Prácticas Pre Profesionales ULEAM{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<section class="hero-section" style="min-height: 100vh; display: flex; align-items: center;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8 mx-auto text-center">
+                <div class="hero-divider mx-auto"></div>
+                <h1 class="fade-in-up display-3 fw-bold">Prácticas Pre Profesionales y Profesionales</h1>
+                <p class="subtitle fade-in-up fs-3 text-warning">¡Aportamos soluciones que trascienden!</p>
+                <p class="lead fade-in-up fs-5">Conecta con las mejores empresas y facultades para desarrollar tus habilidades profesionales. Participa en proyectos de vinculación con enfoque de innovación social que aportan soluciones a problemas y necesidades de la sociedad.</p>
+                
+                <div class="d-flex gap-3 justify-content-center flex-wrap fade-in-up mt-5">
+                    <a href="{% url 'lista_practicas' %}" class="btn btn-light btn-lg px-5 py-3" style="font-size: 1.2rem;">
+                        <i class="bi bi-briefcase"></i> Prácticas en Empresas
+                    </a>
+                    <a href="{% url 'lista_practicas_internas' %}" class="btn btn-outline-light btn-lg px-5 py-3" style="font-size: 1.2rem;">
+                        <i class="bi bi-heart"></i> Prácticas Internas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Objetivos y Desarrollo Sostenible -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-lg-10 mx-auto text-center">
+                <h2 class="display-5 fw-bold mb-4">¡Contribuimos al cumplimiento de los Objetivos de Desarrollo Sostenible!</h2>
+                <p class="lead text-muted">Se desarrollan proyectos de vinculación con la coordinación de docentes y participación de estudiantes con un enfoque de Innovación Social.</p>
+                <p class="fs-5 text-muted">Estos proyectos aportan con soluciones a problemas y necesidades de la sociedad.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Componentes -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center display-5 fw-bold mb-5">Componentes</h2>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card h-100 component-card hover-shadow">
+                    <div class="card-body p-5 text-center">
+                        <div class="mb-4">
+                            <i class="bi bi-briefcase-fill" style="font-size: 4rem; color: #c94141;"></i>
+                        </div>
+                        <h3 class="h4 mb-3 fw-bold">Prácticas Pre-Profesionales</h3>
+                        <p class="text-muted mb-4">En contextos relacionados al perfil del estudiante para desarrollar competencias laborales en empresas e instituciones.</p>
+                        <a href="{% url 'lista_practicas' %}" class="btn btn-component btn-gradient-green">
+                            <i class="bi bi-arrow-right"></i> Explorar Prácticas
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 component-card hover-shadow">
+                    <div class="card-body p-5 text-center">
+                        <div class="mb-4">
+                            <i class="bi bi-heart-fill" style="font-size: 4rem; color: #c94141;"></i>
+                        </div>
+                        <h3 class="h4 mb-3 fw-bold">Prácticas de Servicio Comunitario</h3>
+                        <p class="text-muted mb-4">Cuya naturaleza es el aporte de soluciones innovadoras a problemas de personas, grupos o contextos de vulnerabilidad.</p>
+                        <a href="{% url 'lista_practicas_internas' %}" class="btn btn-component btn-gradient-red">
+                            <i class="bi bi-arrow-right"></i> Ver Proyectos
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Estadísticas -->
+<section class="py-5 stats-section text-white">
+    <div class="container">
+        <div class="row text-center g-4">
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <i class="bi bi-building display-3 mb-3"></i>
+                    <h3 class="display-3 fw-bold mb-2">{{ total_empresas|default:"9" }}</h3>
+                    <p class="fs-5">Empresas Aliadas</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <i class="bi bi-briefcase display-3 mb-3"></i>
+                    <h3 class="display-3 fw-bold mb-2">{{ total_practicas|default:"10" }}</h3>
+                    <p class="fs-5">Prácticas Disponibles</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <i class="bi bi-people display-3 mb-3"></i>
+                    <h3 class="display-3 fw-bold mb-2">{{ total_estudiantes|default:"15" }}</h3>
+                    <p class="fs-5">Estudiantes Beneficiados</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <i class="bi bi-bank display-3 mb-3"></i>
+                    <h3 class="display-3 fw-bold mb-2">{{ total_facultades|default:"4" }}</h3>
+                    <p class="fs-5">Facultades Participantes</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Beneficios -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center display-5 fw-bold mb-5">Beneficios del Programa</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center p-4">
+                    <div class="mb-4">
+                        <i class="bi bi-lightning-charge-fill text-warning" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h4 class="mb-3">Experiencia Real</h4>
+                    <p class="text-muted">Desarrolla habilidades prácticas en entornos profesionales reales antes de graduarte.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center p-4">
+                    <div class="mb-4">
+                        <i class="bi bi-graph-up-arrow text-success" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h4 class="mb-3">Crecimiento Profesional</h4>
+                    <p class="text-muted">Amplía tu red de contactos y construye relaciones profesionales valiosas.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center p-4">
+                    <div class="mb-4">
+                        <i class="bi bi-trophy-fill text-primary" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h4 class="mb-3">Competitividad</h4>
+                    <p class="text-muted">Destaca en el mercado laboral con experiencia certificada y reconocida.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center p-4">
+                    <div class="mb-4">
+                        <i class="bi bi-heart-pulse-fill text-danger" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h4 class="mb-3">Impacto Social</h4>
+                    <p class="text-muted">Contribuye al desarrollo de la comunidad y genera cambios positivos.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center p-4">
+                    <div class="mb-4">
+                        <i class="bi bi-mortarboard-fill text-info" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h4 class="mb-3">Aprendizaje Continuo</h4>
+                    <p class="text-muted">Accede a capacitaciones y mentorías que complementan tu formación académica.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center p-4">
+                    <div class="mb-4">
+                        <i class="bi bi-rocket-takeoff-fill text-warning" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h4 class="mb-3">Oportunidades Laborales</h4>
+                    <p class="text-muted">Muchas empresas contratan a sus practicantes destacados al finalizar.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Innovaciones Sociales -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center display-5 fw-bold mb-3">Innovaciones Sociales al Servicio de la Comunidad</h2>
+        <p class="text-center text-muted mb-5 lead">Proyectos destacados que han generado impacto positivo</p>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-tree-fill text-success me-3" style="font-size: 2.5rem;"></i>
+                            <h5 class="card-title mb-0">Educación Ambiental</h5>
+                        </div>
+                        <ul class="list-unstyled text-muted">
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> +1000 niños beneficiados con talleres</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Campañas de reforestación</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Programas de reciclaje comunitario</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-hospital-fill text-danger me-3" style="font-size: 2.5rem;"></i>
+                            <h5 class="card-title mb-0">Salud Comunitaria</h5>
+                        </div>
+                        <ul class="list-unstyled text-muted">
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Brigadas médicas en zonas rurales</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Campañas de prevención</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Atención psicológica gratuita</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-book-fill text-primary me-3" style="font-size: 2.5rem;"></i>
+                            <h5 class="card-title mb-0">Educación Digital</h5>
+                        </div>
+                        <ul class="list-unstyled text-muted">
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Alfabetización digital para adultos</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Programas de capacitación tecnológica</li>
+                            <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Acceso a recursos educativos</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonios -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center display-5 fw-bold mb-5">Lo que Dicen Nuestros Estudiantes</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <i class="bi bi-quote text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <p class="text-muted mb-4">"Las prácticas me permitieron aplicar todos los conocimientos teóricos en un ambiente real. Fue una experiencia transformadora que me preparó para el mundo laboral."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="bi bi-person-fill text-white fs-4"></i>
+                            </div>
+                            <div class="ms-3">
+                                <h6 class="mb-0">María González</h6>
+                                <small class="text-muted">Estudiante de Ingeniería</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <i class="bi bi-quote text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <p class="text-muted mb-4">"Participar en proyectos de vinculación social me ayudó a entender el verdadero impacto que podemos generar como profesionales en la comunidad."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="bi bi-person-fill text-white fs-4"></i>
+                            </div>
+                            <div class="ms-3">
+                                <h6 class="mb-0">Carlos Mendoza</h6>
+                                <small class="text-muted">Estudiante de Medicina</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <i class="bi bi-quote text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <p class="text-muted mb-4">"La universidad me brindó la oportunidad de trabajar en una empresa líder. Hoy, gracias a esa experiencia, formo parte del equipo permanente."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="bi bi-person-fill text-white fs-4"></i>
+                            </div>
+                            <div class="ms-3">
+                                <h6 class="mb-0">Ana Rodríguez</h6>
+                                <small class="text-muted">Estudiante de Administración</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-5 bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h2 class="display-5 fw-bold mb-3">¿Listo para Comenzar tu Experiencia Profesional?</h2>
+                <p class="lead mb-0">Únete a cientos de estudiantes que ya están construyendo su futuro profesional.</p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'lista_practicas' %}" class="btn btn-light btn-lg px-5">
+                        <i class="bi bi-search"></i> Explorar Prácticas
+                    </a>
+                {% else %}
+                    <a href="{% url 'registro_estudiante' %}" class="btn btn-light btn-lg px-5">
+                        <i class="bi bi-person-plus"></i> Registrarse Ahora
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    /* Cards de componentes - Estilo similar a la imagen */
+    .component-card {
+        background: #f5f5f7 !important;
+        border: none !important;
+        border-radius: 20px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .component-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .component-card .card-body {
+        background: #f5f5f7;
+    }
+    
+    /* Botones con gradiente - Rojo a Verde */
+    .btn-component {
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 12px 32px;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .btn-gradient-green {
+        background: linear-gradient(90deg, #c94141 0%, #4caf50 100%);
+    }
+    
+    .btn-gradient-green:hover {
+        background: linear-gradient(90deg, #b03636 0%, #43a047 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    
+    .btn-gradient-red {
+        background: linear-gradient(90deg, #c94141 0%, #e91e63 100%);
+    }
+    
+    .btn-gradient-red:hover {
+        background: linear-gradient(90deg, #b03636 0%, #d81b60 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    
+    /* Sección de estadísticas - Degradado rojo a verde como la imagen */
+    .stats-section {
+        background: linear-gradient(90deg, #c94141 0%, #b85a4a 15%, #a87453 30%, #8d8b5f 50%, #6da16d 70%, #5cb574 85%, #4caf50 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stats-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, rgba(201, 65, 65, 0.95) 0%, rgba(184, 90, 74, 0.95) 15%, rgba(168, 116, 83, 0.95) 30%, rgba(141, 139, 95, 0.95) 50%, rgba(109, 161, 109, 0.95) 70%, rgba(92, 181, 116, 0.95) 85%, rgba(76, 175, 80, 0.95) 100%);
+    }
+    
+    .stats-section .container {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .stat-item {
+        transition: all 0.3s ease;
+        padding: 30px 20px;
+        border-radius: 15px;
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    .stat-item:hover {
+        transform: scale(1.05);
+        background: rgba(255,255,255,0.15);
+    }
+    
+    .stat-item i {
+        opacity: 0.9;
+    }
+    
+    /* Títulos de secciones */
+    .display-5 {
+        position: relative;
+        padding-bottom: 20px;
+        margin-bottom: 3rem !important;
+    }
+    
+    .display-5::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 2px;
+    }
+    
+    /* Cards generales */
+    .card {
+        border: none !important;
+        border-radius: 15px !important;
+        overflow: hidden;
+        background: #ffffff;
+    }
+    
+    .hover-shadow {
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    /* Sección de beneficios */
+    .text-center.p-4 {
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .text-center.p-4:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        border-color: #667eea;
+    }
+    
+    /* Cards de innovaciones sociales */
+    .card.border-0 {
+        border: none !important;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .card.border-0:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        transform: translateY(-5px);
+    }
+    
+    /* Cards de testimonios */
+    .card.border-0.shadow-sm {
+        border: none !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    }
+    
+    .card.border-0.shadow-sm:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+        transform: translateY(-5px);
+    }
+    
+    /* Botones estándar */
+    .btn {
+        border-radius: 25px;
+        font-weight: 600;
+        padding: 10px 28px;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .btn-primary {
+        background: #667eea;
+    }
+    
+    .btn-primary:hover {
+        background: #5568d3;
+    }
+    
+    /* Animaciones */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .fade-in-up {
+        animation: fadeInUp 0.8s ease-out;
+    }
+    
+    /* Íconos */
+    .bi {
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+    
+    /* Mejorar fondo de secciones */
+    .bg-light {
+        background-color: #fafafa !important;
+    }
+</style>
+
+{% endblock %}

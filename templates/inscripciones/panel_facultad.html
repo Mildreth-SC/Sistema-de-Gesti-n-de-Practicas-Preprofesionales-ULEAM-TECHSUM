@@ -1,0 +1,152 @@
+{% extends 'inscripciones/base.html' %}
+{% load static %}
+
+{% block title %}Panel de Facultad - {{ facultad.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1><i class="fas fa-university"></i> Panel de Facultad</h1>
+            <h3 class="text-muted">{{ facultad.nombre }}</h3>
+            <hr>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Prácticas</h5>
+                    <h2>{{ total_practicas }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Prácticas Activas</h5>
+                    <h2>{{ practicas_activas }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Postulaciones</h5>
+                    <h2>{{ total_postulaciones }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h5 class="card-title">Pendientes</h5>
+                    <h2>{{ postulaciones_pendientes }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4>Acciones Rápidas</h4>
+            <div class="btn-group" role="group">
+                <a href="{% url 'crear_practica_facultad' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nueva Práctica Interna
+                </a>
+                <a href="{% url 'mis_practicas_facultad' %}" class="btn btn-secondary">
+                    <i class="fas fa-list"></i> Todas las Prácticas
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Últimas Prácticas -->
+    <div class="row">
+        <div class="col-12">
+            <h4>Últimas Prácticas Publicadas</h4>
+            {% if practicas %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Tipo de Servicio</th>
+                            <th>Estado</th>
+                            <th>Cupos</th>
+                            <th>Postulaciones</th>
+                            <th>Fecha Publicación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for practica in practicas %}
+                        <tr>
+                            <td>{{ practica.titulo }}</td>
+                            <td>{{ practica.get_tipo_servicio_display }}</td>
+                            <td>
+                                <span class="badge badge-{% if practica.estado == 'disponible' %}success{% elif practica.estado == 'en_proceso' %}warning{% else %}secondary{% endif %}">
+                                    {{ practica.get_estado_display }}
+                                </span>
+                            </td>
+                            <td>{{ practica.cupos_disponibles }}/{{ practica.cupos_totales }}</td>
+                            <td>{{ practica.inscripcioninterna_set.count }}</td>
+                            <td>{{ practica.fecha_publicacion|date:"d/m/Y" }}</td>
+                            <td>
+                                <a href="{% url 'postulantes_practica_interna' practica.pk %}" class="btn btn-sm btn-primary mb-1">
+                                    <i class="fas fa-users"></i> Ver Postulantes
+                                </a>
+                                <a href="{% url 'editar_practica_facultad' practica.pk %}" class="btn btn-sm btn-warning mb-1">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                                <button type="button" class="btn btn-danger btn-sm mb-1"
+                                    onclick="if(confirm('¿Estás seguro de eliminar esta práctica interna? Esta acción no se puede deshacer.')) { document.getElementById('delete-form-panel-{{ practica.pk }}').submit(); }">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                                <form id="delete-form-panel-{{ practica.pk }}" action="{% url 'eliminar_practica_facultad' practica.pk %}" method="post" style="display:none;">
+                                    {% csrf_token %}
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                No has publicado ninguna práctica interna aún. 
+                <a href="{% url 'crear_practica_facultad' %}">Crear primera práctica</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Información de la Facultad -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Información de la Facultad</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Código:</strong> {{ facultad.codigo }}</p>
+                            <p><strong>Decano:</strong> {{ facultad.decano }}</p>
+                            <p><strong>Responsable:</strong> {{ facultad.contacto_responsable }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Teléfono:</strong> {{ facultad.telefono }}</p>
+                            <p><strong>Email:</strong> {{ facultad.email }}</p>
+                            <p><strong>Dirección:</strong> {{ facultad.direccion }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

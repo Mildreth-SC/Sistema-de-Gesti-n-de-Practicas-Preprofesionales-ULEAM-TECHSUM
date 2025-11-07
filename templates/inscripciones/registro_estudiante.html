@@ -1,0 +1,139 @@
+{% extends 'inscripciones/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Registro de Estudiante - Sistema de Prácticas{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>
+                        <i class="bi bi-person-plus-fill"></i> Registro de Estudiante
+                    </h2>
+                    <p>Completa el formulario para crear tu cuenta y acceder a las prácticas pre profesionales</p>
+                </div>
+                        
+                        <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Información Personal -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col-12">
+                                <h5 class="title-uleam border-bottom pb-2 mb-3">
+                                    <i class="bi bi-person-fill"></i> Información Personal
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.first_name|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.last_name|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.email|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.username|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <!-- Información Académica -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col-12">
+                                <h5 class="subtitle-uleam border-bottom pb-2 mb-3">
+                                    <i class="bi bi-mortarboard-fill"></i> Información Académica
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.codigo_estudiante|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.carrera|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.ciclo_actual|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.foto|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <!-- Información de Contacto -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col-12">
+                                <h5 class="title-uleam border-bottom pb-2 mb-3">
+                                    <i class="bi bi-telephone-fill"></i> Información de Contacto
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.telefono|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.fecha_nacimiento|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                {{ form.direccion|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <!-- Contraseñas -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col-12">
+                                <h5 class="subtitle-uleam border-bottom pb-2 mb-3">
+                                    <i class="bi bi-shield-lock-fill"></i> Seguridad
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.password1|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.password2|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <!-- Términos y Condiciones -->
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="terminos" required>
+                            <label class="form-check-label" for="terminos">
+                                Acepto los <a href="#" style="color: var(--uleam-red); font-weight: 600;">términos y condiciones</a> del sistema
+                            </label>
+                        </div>
+                        
+                        <!-- Botones -->
+                        <div class="form-actions mt-4">
+                            <button type="submit" class="btn-submit">
+                                <i class="bi bi-person-plus-fill"></i> Crear Cuenta
+                            </button>
+                            <a href="{% url 'login' %}" class="btn-cancel">
+                                <i class="bi bi-box-arrow-in-right"></i> Ya tengo cuenta
+                            </a>
+                        </div>
+                    </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,143 @@
+{% extends 'inscripciones/base.html' %}
+{% load static %}
+
+{% block title %}Mis Prácticas - {{ empresa.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="fas fa-list"></i> Mis Prácticas</h2>
+            <p class="text-muted">{{ empresa.nombre }}</p>
+            <hr>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <form method="get" class="form-inline">
+                <label class="mr-2">Filtrar por estado:</label>
+                <select name="estado" class="form-control mr-2">
+                    <option value="">Todos</option>
+                    <option value="disponible" {% if request.GET.estado == 'disponible' %}selected{% endif %}>Disponible</option>
+                    <option value="en_proceso" {% if request.GET.estado == 'en_proceso' %}selected{% endif %}>En Proceso</option>
+                    <option value="completada" {% if request.GET.estado == 'completada' %}selected{% endif %}>Completada</option>
+                    <option value="cancelada" {% if request.GET.estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+                <a href="{% url 'mis_practicas_empresa' %}" class="btn btn-secondary ml-2">Limpiar</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Botón para crear nueva práctica -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="{% url 'crear_practica_empresa' %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Nueva Práctica
+            </a>
+        </div>
+    </div>
+
+    <!-- Lista de prácticas -->
+    <div class="row">
+        <div class="col-12">
+            {% if practicas %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Título</th>
+                            <th>Estado</th>
+                            <th>Activa</th>
+                            <th>Cupos</th>
+                            <th>Postulaciones</th>
+                            <th>Fecha Inicio</th>
+                            <th>Fecha Límite</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for practica in practicas %}
+                        <tr>
+                            <td>{{ practica.titulo }}</td>
+                            <td>
+                                <span class="badge badge-{% if practica.estado == 'disponible' %}success{% elif practica.estado == 'en_proceso' %}warning{% else %}secondary{% endif %}">
+                                    {{ practica.get_estado_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if practica.activa %}
+                                <span class="badge badge-success">Sí</span>
+                                {% else %}
+                                <span class="badge badge-danger">No</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ practica.cupos_disponibles }}/{{ practica.cupos_totales }}</td>
+                            <td>{{ practica.inscripcion_set.count }}</td>
+                            <td>{{ practica.fecha_inicio|date:"d/m/Y" }}</td>
+                            <td>{{ practica.fecha_limite_inscripcion|date:"d/m/Y" }}</td>
+                            <td class="text-nowrap">
+                                <a href="{% url 'detalle_practica' practica.pk %}" class="btn btn-info btn-sm mb-1">
+                                    <i class="fas fa-eye"></i> Ver Detalle
+                                </a>
+                                <a href="{% url 'postulantes_practica' practica.pk %}" class="btn btn-primary btn-sm mb-1">
+                                    <i class="fas fa-users"></i> Ver Postulantes
+                                </a>
+                                <a href="{% url 'editar_practica_empresa' practica.pk %}" class="btn btn-warning btn-sm mb-1">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                                <button type="button" class="btn btn-danger btn-sm mb-1" 
+                                    onclick="if(confirm('¿Estás seguro de eliminar esta práctica? Esta acción no se puede deshacer.')) { document.getElementById('delete-form-{{ practica.pk }}').submit(); }">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                                <form id="delete-form-{{ practica.pk }}" action="{% url 'eliminar_practica_empresa' practica.pk %}" method="post" style="display:none;">
+                                    {% csrf_token %}
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% if practicas.has_other_pages %}
+            <nav aria-label="Navegación de páginas">
+                <ul class="pagination">
+                    {% if practicas.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">Primera</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ practicas.previous_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">Anterior</a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">Página {{ practicas.number }} de {{ practicas.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if practicas.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ practicas.next_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">Siguiente</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ practicas.paginator.num_pages }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">Última</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="alert alert-info">
+                No has publicado ninguna práctica aún. 
+                <a href="{% url 'crear_practica_empresa' %}">Crear primera práctica</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

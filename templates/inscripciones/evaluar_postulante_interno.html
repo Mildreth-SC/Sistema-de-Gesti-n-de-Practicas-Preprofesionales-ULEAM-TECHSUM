@@ -1,0 +1,93 @@
+{% extends 'inscripciones/base.html' %}
+{% load static %}
+
+{% block title %}Evaluar Postulante Interno{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="form-container" style="max-width: 900px;">
+        <div class="form-header">
+            <h2>
+                <i class="bi bi-clipboard-check"></i> Evaluar Postulante Interno
+            </h2>
+            <p>Revisa la información y toma una decisión sobre la postulación interna</p>
+        </div>
+
+        <!-- Información de la Práctica Interna -->
+        <div class="card-uleam mb-4">
+            <div class="card-body">
+                <h5 style="color: var(--uleam-red); margin-bottom: 1rem;">
+                    <i class="bi bi-mortarboard"></i> Información de la Práctica Interna
+                </h5>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <strong>Título:</strong> {{ inscripcion.practica.titulo }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Facultad:</strong> {{ facultad.nombre }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Tipo de Servicio:</strong> {{ inscripcion.practica.get_tipo_servicio_display }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Fecha Inicio:</strong> {{ inscripcion.practica.fecha_inicio|date:"d/m/Y" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del Estudiante -->
+        <div class="card-uleam mb-4">
+            <div class="card-body">
+                <h5 style="color: var(--uleam-red); margin-bottom: 1rem;">
+                    <i class="bi bi-person"></i> Información del Estudiante
+                </h5>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <strong>Nombre:</strong> {{ inscripcion.estudiante.user.get_full_name }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Código:</strong> {{ inscripcion.estudiante.codigo_estudiante }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Carrera:</strong> {{ inscripcion.estudiante.carrera.nombre }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Email:</strong> {{ inscripcion.estudiante.user.email }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Teléfono:</strong> {{ inscripcion.estudiante.telefono }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Fecha Inscripción:</strong> {{ inscripcion.fecha_inscripcion|date:"d/m/Y H:i" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Evaluación -->
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="observaciones" class="form-label">
+                    <i class="bi bi-chat-text"></i> Observaciones
+                </label>
+                <textarea name="observaciones" id="observaciones" class="form-control" rows="4" placeholder="Ingrese comentarios o razones de la decisión (opcional)"></textarea>
+                <small class="form-text">Estas observaciones serán visibles para el estudiante</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" name="accion" value="aprobar" class="btn-submit" style="background: linear-gradient(135deg, #28A745, #20C997);">
+                    <i class="bi bi-check-circle"></i> Aprobar Postulante
+                </button>
+                <button type="submit" name="accion" value="rechazar" class="btn-submit" style="background: linear-gradient(135deg, #DC3545, #C82333);">
+                    <i class="bi bi-x-circle"></i> Rechazar Postulante
+                </button>
+                <a href="{% url 'postulantes_practica_interna' inscripcion.practica.pk %}" class="btn-cancel">
+                    <i class="bi bi-arrow-left"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

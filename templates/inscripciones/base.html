@@ -1,0 +1,1526 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Prácticas Pre Profesionales{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Fuente principal */
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        /* Colores institucionales Universidad Laica Eloy Alfaro de Manabí */
+        :root {
+            --uleam-red: #C41E3A;
+            --uleam-green: #228B22;
+            --uleam-blue: #1E3A8A;
+            --uleam-blue-modern: #2563EB; /* Azul moderno similar a la imagen */
+            --uleam-white: #FFFFFF;
+            --uleam-light-gray: #F8F9FA;
+            --uleam-dark-gray: #6C757D;
+            --uleam-gradient: linear-gradient(135deg, #C41E3A 0%, #228B22 100%);
+            --uleam-gradient-reverse: linear-gradient(135deg, #228B22 0%, #C41E3A 100%);
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+            --shadow-lg: 0 8px 30px rgba(0,0,0,0.15);
+        }
+        
+        /* Sobrescribir colores primarios de Bootstrap con colores ULEAM */
+        .bg-primary {
+            background: var(--uleam-gradient) !important;
+        }
+        
+        .btn-primary {
+            background: var(--uleam-gradient);
+            border: none;
+            color: var(--uleam-white);
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: var(--uleam-gradient-reverse);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(196, 30, 58, 0.4);
+            color: var(--uleam-white);
+        }
+        
+        .btn-primary:focus, .btn-primary:active {
+            background: var(--uleam-gradient);
+            box-shadow: 0 0 0 0.25rem rgba(196, 30, 58, 0.25);
+            color: var(--uleam-white);
+        }
+        
+        .text-primary {
+            color: var(--uleam-red) !important;
+        }
+        
+        .border-primary {
+            border-color: var(--uleam-red) !important;
+        }
+        
+        .btn-outline-primary {
+            color: var(--uleam-red);
+            border-color: var(--uleam-red);
+            border-width: 2px;
+            font-weight: 600;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--uleam-red);
+            border-color: var(--uleam-red);
+            color: var(--uleam-white);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3);
+        }
+        
+        /* Botones small también con el gradiente */
+        .btn-sm.btn-primary {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .btn-lg.btn-primary {
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            overflow-x: hidden;
+        }
+        
+        /* Navbar mejorado con logo */
+        .navbar-uleam {
+            background: var(--uleam-gradient) !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+        }
+        
+        .navbar-uleam .navbar-brand {
+            font-weight: 700;
+            color: var(--uleam-white) !important;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .navbar-uleam .navbar-brand img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .navbar-uleam .nav-link {
+            color: var(--uleam-white) !important;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px;
+        }
+        
+        .navbar-uleam .nav-link:hover {
+            color: var(--uleam-white) !important;
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .navbar-uleam .dropdown-menu {
+            border: none;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-radius: 12px;
+            padding: 0.5rem 0;
+        }
+        
+        .navbar-uleam .dropdown-item {
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-uleam .dropdown-item:hover {
+            background-color: var(--uleam-red);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        /* Hero Section mejorado con imagen de fondo */
+        .hero-section {
+            background: linear-gradient(rgba(196, 30, 58, 0.85), rgba(34, 139, 34, 0.85)), 
+                        url('{% static "img/EZM_1396-1024x683.jpg" %}') center/cover;
+            color: var(--uleam-white);
+            padding: 120px 0;
+            position: relative;
+            overflow: hidden;
+            min-height: 500px;
+        }
+        
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, var(--uleam-white));
+            z-index: 1;
+        }
+        
+        .hero-section .container {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-section h1 {
+            font-weight: 700;
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.4);
+            line-height: 1.2;
+        }
+        
+        .hero-section .subtitle {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
+        }
+        
+        .hero-section .lead {
+            font-size: 1.2rem;
+            font-weight: 400;
+            margin-bottom: 2rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            line-height: 1.6;
+        }
+        
+        .hero-divider {
+            width: 100px;
+            height: 4px;
+            background: var(--uleam-white);
+            margin: 2rem 0;
+        }
+        
+        /* Cards mejoradas con efectos */
+        .card-uleam {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--uleam-white);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .card-uleam::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--uleam-gradient);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+        
+        .card-uleam:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-uleam:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .card-header-uleam {
+            background: var(--uleam-gradient);
+            color: var(--uleam-white);
+            border-radius: 20px 20px 0 0 !important;
+            border: none;
+            padding: 1.5rem;
+        }
+        
+        /* Card con borde degradado */
+        .card-gradient-border {
+            position: relative;
+            padding: 3px;
+            background: var(--uleam-gradient);
+            border-radius: 20px;
+        }
+        
+        .card-gradient-border .card-inner {
+            background: white;
+            border-radius: 18px;
+            padding: 2rem;
+        }
+        
+        /* Botones mejorados */
+        .btn-uleam-primary {
+            background: var(--uleam-gradient);
+            border: none;
+            color: var(--uleam-white);
+            font-weight: 600;
+            border-radius: 30px;
+            padding: 12px 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(196, 30, 58, 0.3);
+        }
+        
+        .btn-uleam-primary:hover {
+            background: linear-gradient(45deg, var(--uleam-green), var(--uleam-red));
+            color: var(--uleam-white);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(196, 30, 58, 0.4);
+        }
+        
+        .btn-uleam-outline {
+            border: 2px solid var(--uleam-red);
+            color: var(--uleam-red);
+            background: transparent;
+            font-weight: 600;
+            border-radius: 30px;
+            padding: 10px 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-uleam-outline:hover {
+            background: var(--uleam-red);
+            color: var(--uleam-white);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(196, 30, 58, 0.3);
+        }
+        
+        /* Footer mejorado */
+        .footer-uleam {
+            background: var(--uleam-gradient);
+            color: var(--uleam-white);
+            padding: 60px 0 30px;
+            position: relative;
+        }
+        
+        .footer-uleam::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--uleam-white);
+        }
+        
+        .footer-uleam h5 {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-uleam a {
+            color: var(--uleam-white);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .footer-uleam a:hover {
+            color: var(--uleam-white);
+            text-decoration: underline;
+            transform: translateX(5px);
+        }
+        
+        /* Estadísticas mejoradas */
+        .stats-card-red {
+            background: linear-gradient(135deg, var(--uleam-red), #E74C3C);
+            color: var(--uleam-white);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card-red:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(196, 30, 58, 0.3);
+        }
+        
+        .stats-card-green {
+            background: linear-gradient(135deg, var(--uleam-green), #27AE60);
+            color: var(--uleam-white);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card-green:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(34, 139, 34, 0.3);
+        }
+        
+        .stats-card-white {
+            background: var(--uleam-white);
+            color: var(--uleam-red);
+            border: 3px solid var(--uleam-red);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card-white:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(196, 30, 58, 0.2);
+        }
+        
+        /* Títulos mejorados con efectos */
+        .title-uleam {
+            color: var(--uleam-red);
+            font-weight: 700;
+            font-size: 2.5rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .title-uleam::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: var(--uleam-gradient);
+            border-radius: 2px;
+        }
+        
+        .subtitle-uleam {
+            color: var(--uleam-green);
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+        
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--uleam-red);
+            margin-bottom: 1rem;
+        }
+        
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: var(--uleam-dark-gray);
+            margin-bottom: 3rem;
+        }
+        
+        /* Secciones con fondo y efectos */
+        .section-uleam-light {
+            background-color: var(--uleam-light-gray);
+            padding: 80px 0;
+            position: relative;
+        }
+        
+        .section-uleam-white {
+            background-color: var(--uleam-white);
+            padding: 80px 0;
+        }
+        
+        .section-gradient {
+            background: var(--uleam-gradient);
+            color: var(--uleam-white);
+            padding: 80px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .section-gradient::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('{% static "img/EZM_1396-1024x683.jpg" %}') center/cover;
+            opacity: 0.05;
+        }
+        
+        /* Badge personalizado */
+        .badge-uleam {
+            background: var(--uleam-gradient);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        /* Lista con iconos */
+        .list-uleam {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .list-uleam li {
+            padding: 0.75rem 0;
+            padding-left: 2rem;
+            position: relative;
+        }
+        
+        .list-uleam li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--uleam-green);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        /* Componentes numerados */
+        .numbered-item {
+            display: flex;
+            align-items: start;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .numbered-item .number {
+            flex-shrink: 0;
+            width: 50px;
+            height: 50px;
+            background: var(--uleam-gradient);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        /* Testimonios */
+        .testimonial-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+        
+        .testimonial-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid var(--uleam-red);
+            object-fit: cover;
+        }
+        
+        /* Logos de alianzas */
+        .alliance-logo {
+            height: 80px;
+            width: auto;
+            max-width: 150px;
+            filter: grayscale(100%);
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+        
+        .alliance-logo:hover {
+            filter: grayscale(0%);
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        /* Animaciones mejoradas */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .fade-in-left {
+            animation: fadeInLeft 0.8s ease-out;
+        }
+        
+        .fade-in-right {
+            animation: fadeInRight 0.8s ease-out;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        /* === ESTILOS DE FORMULARIOS ESTANDARIZADOS === */
+        
+        /* Contenedor principal de formularios */
+        .form-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            padding: 2.5rem;
+            margin: 2rem auto;
+            max-width: 800px;
+        }
+        
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--uleam-light-gray);
+        }
+        
+        .form-header h2 {
+            color: var(--uleam-red);
+            font-weight: 700;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-header p {
+            color: var(--uleam-dark-gray);
+            font-size: 1rem;
+        }
+        
+        /* Campos de formulario */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            color: var(--uleam-red);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .form-label i {
+            color: var(--uleam-green);
+        }
+        
+        .form-control, .form-select, textarea.form-control {
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background-color: #FAFAFA;
+        }
+        
+        .form-control:focus, .form-select:focus, textarea.form-control:focus {
+            border-color: var(--uleam-red);
+            box-shadow: 0 0 0 0.2rem rgba(196, 30, 58, 0.15);
+            background-color: white;
+        }
+        
+        .form-control::placeholder {
+            color: #B0B0B0;
+        }
+        
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        /* Texto de ayuda */
+        .form-text {
+            color: var(--uleam-dark-gray);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        /* Mensajes de error */
+        .invalid-feedback {
+            color: #DC3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .is-invalid {
+            border-color: #DC3545 !important;
+        }
+        
+        /* Botones de formulario */
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px solid var(--uleam-light-gray);
+        }
+        
+        .btn-submit {
+            background: var(--uleam-gradient);
+            border: none;
+            color: white;
+            font-weight: 600;
+            border-radius: 30px;
+            padding: 12px 40px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(196, 30, 58, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-submit:hover {
+            background: var(--uleam-gradient-reverse);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(196, 30, 58, 0.4);
+        }
+        
+        .btn-cancel {
+            background: transparent;
+            border: 2px solid var(--uleam-dark-gray);
+            color: var(--uleam-dark-gray);
+            font-weight: 600;
+            border-radius: 30px;
+            padding: 10px 40px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-cancel:hover {
+            background: var(--uleam-dark-gray);
+            color: white;
+            border-color: var(--uleam-dark-gray);
+        }
+        
+        /* Select2 / Multiselect personalizado */
+        .select2-container--default .select2-selection--single,
+        .select2-container--default .select2-selection--multiple {
+            border: 2px solid #E0E0E0 !important;
+            border-radius: 12px !important;
+            padding: 0.5rem !important;
+            min-height: 45px !important;
+        }
+        
+        /* Checkbox y Radio personalizados */
+        .form-check-input {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-top: 0.15rem;
+            border: 2px solid var(--uleam-red);
+            cursor: pointer;
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--uleam-red);
+            border-color: var(--uleam-red);
+        }
+        
+        .form-check-input:focus {
+            border-color: var(--uleam-red);
+            box-shadow: 0 0 0 0.2rem rgba(196, 30, 58, 0.15);
+        }
+        
+        .form-check-label {
+            color: var(--uleam-dark-gray);
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+        
+        /* Input de archivo personalizado */
+        .custom-file-input {
+            display: none;
+        }
+        
+        .custom-file-label {
+            display: block;
+            border: 2px dashed var(--uleam-red);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #FAFAFA;
+        }
+        
+        .custom-file-label:hover {
+            background-color: rgba(196, 30, 58, 0.05);
+            border-color: var(--uleam-green);
+        }
+        
+        .custom-file-label i {
+            font-size: 3rem;
+            color: var(--uleam-red);
+            display: block;
+            margin-bottom: 1rem;
+        }
+        
+        /* Alertas personalizadas */
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .alert i {
+            font-size: 1.25rem;
+        }
+        
+        .alert-success {
+            background: linear-gradient(135deg, rgba(34, 139, 34, 0.15), rgba(34, 139, 34, 0.05));
+            color: #155724;
+            border-left: 4px solid var(--uleam-green);
+        }
+        
+        .alert-danger, .alert-error {
+            background: linear-gradient(135deg, rgba(196, 30, 58, 0.15), rgba(196, 30, 58, 0.05));
+            color: #721c24;
+            border-left: 4px solid var(--uleam-red);
+        }
+        
+        .alert-warning {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05));
+            color: #856404;
+            border-left: 4px solid #FFC107;
+        }
+        
+        .alert-info {
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.15), rgba(13, 110, 253, 0.05));
+            color: #055160;
+            border-left: 4px solid #0DCAF0;
+        }
+        
+        .alert .btn-close {
+            margin-left: auto;
+        }
+        
+        /* Alertas ULEAM (compatibilidad) */
+        .alert-uleam {
+            border-radius: 15px;
+            border: none;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .alert-uleam.alert-success {
+            background: linear-gradient(135deg, rgba(34, 139, 34, 0.1), rgba(34, 139, 34, 0.05));
+            color: var(--uleam-green);
+            border-left: 4px solid var(--uleam-green);
+        }
+        
+        .alert-uleam.alert-danger {
+            background: linear-gradient(135deg, rgba(196, 30, 58, 0.1), rgba(196, 30, 58, 0.05));
+            color: var(--uleam-red);
+            border-left: 4px solid var(--uleam-red);
+        }
+        
+        .alert-uleam.alert-warning {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05));
+            color: #856404;
+            border-left: 4px solid #FFC107;
+        }
+        
+        .alert-uleam.alert-info {
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.1), rgba(30, 58, 138, 0.05));
+            color: var(--uleam-blue);
+            border-left: 4px solid var(--uleam-blue);
+        }
+        
+        /* Badge de campo requerido */
+        .required-badge {
+            color: var(--uleam-red);
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-left: 0.25rem;
+        }
+        
+        /* Progreso de formulario */
+        .form-progress {
+            margin-bottom: 2rem;
+        }
+        
+        .form-progress-bar {
+            height: 8px;
+            border-radius: 10px;
+            background: var(--uleam-light-gray);
+            overflow: hidden;
+        }
+        
+        .form-progress-fill {
+            height: 100%;
+            background: var(--uleam-gradient);
+            transition: width 0.3s ease;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 80px 0;
+            }
+            
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+            
+            .navbar-uleam .navbar-brand {
+                font-size: 1.2rem;
+            }
+            
+            .navbar-uleam .navbar-brand img {
+                height: 35px;
+            }
+            
+            .form-container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .btn-submit, .btn-cancel {
+                width: 100%;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+    <style>
+        #chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 420px;
+            max-width: 95%;
+            max-height: 650px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1000;
+            border: 3px solid transparent;
+            background-image: linear-gradient(white, white), var(--uleam-gradient);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+        }
+        #chatbot-header {
+            background: var(--uleam-gradient);
+            color: white;
+            padding: 15px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #chatbot-body {
+            padding: 15px;
+            height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            scroll-behavior: smooth;
+        }
+        #chatbot-body::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chatbot-body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        #chatbot-body::-webkit-scrollbar-thumb {
+            background: var(--uleam-red);
+            border-radius: 10px;
+        }
+        #chatbot-body::-webkit-scrollbar-thumb:hover {
+            background: #A01828;
+        }
+        .chat-message {
+            padding: 10px 15px;
+            border-radius: 20px;
+            max-width: 80%;
+            line-height: 1.4;
+        }
+        .user-message {
+            background-color: #f1f1f1;
+            align-self: flex-end;
+        }
+        .bot-message {
+            background-color: var(--uleam-red);
+            color: white;
+            align-self: flex-start;
+            white-space: pre-line;
+        }
+        .chat-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(196, 30, 58, 0.03) 0%, rgba(34, 139, 34, 0.03) 100%);
+            border-radius: 15px;
+            border: 1px solid rgba(196, 30, 58, 0.1);
+        }
+        .chat-option-btn {
+            background: white;
+            border: 2px solid var(--uleam-red);
+            color: var(--uleam-red);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .chat-option-btn.full-width {
+            width: 100%;
+            justify-content: flex-start;
+        }
+        .chat-option-btn:hover {
+            background: var(--uleam-gradient);
+            color: white;
+            border-color: transparent;
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3);
+        }
+        .chat-option-btn:active {
+            transform: translateX(3px) scale(0.98);
+        }
+        .chat-option-btn i {
+            font-size: 1.1rem;
+            min-width: 20px;
+        }
+        #chatbot-footer {
+            padding: 15px;
+            border-top: 1px solid #f1f1f1;
+            display: flex;
+        }
+        #chatbot-input {
+            flex-grow: 1;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 10px 15px;
+            margin-right: 10px;
+        }
+        #chatbot-send {
+            background: var(--uleam-gradient);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #chatbot-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--uleam-gradient);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 999;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+        #chatbot-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(196, 30, 58, 0.4);
+        }
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2), 0 0 0 0 rgba(196, 30, 58, 0.7);
+            }
+            50% {
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2), 0 0 0 10px rgba(196, 30, 58, 0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-uleam">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <img src="{% static 'img/LOGO-ULEAM.png' %}" alt="Logo ULEAM" class="me-2">
+                ULEAM - Sistema de Prácticas
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'home' %}">
+                        <i class="bi bi-house"></i> Inicio
+                    </a>
+                </li>
+                
+                <!-- Menú de Prácticas (solo para estudiantes y usuarios no autenticados) -->
+                {% if not user.is_authenticated or user.estudiante %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-briefcase"></i> Prácticas
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{% url 'lista_practicas' %}">
+                                <i class="bi bi-briefcase"></i> Prácticas en Empresas
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'lista_practicas_internas' %}">
+                                <i class="bi bi-heart"></i> Prácticas Internas
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'lista_empresas' %}">
+                            <i class="bi bi-building"></i> Empresas
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+            
+            <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                    <!-- Menú para Estudiantes -->
+                    {% if user.estudiante %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'mis_inscripciones' %}">
+                                <i class="bi bi-list-check"></i> Mis Inscripciones
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'perfil_estudiante' %}">
+                                <i class="bi bi-person"></i> Mi Perfil
+                            </a>
+                        </li>
+                    <!-- Menú para Empresas -->
+                    {% elif user.empresa %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'panel_empresa' %}">
+                                <i class="bi bi-grid-fill"></i> Panel de Control
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'mis_practicas_empresa' %}">
+                                <i class="bi bi-briefcase"></i> Mis Prácticas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'crear_practica_empresa' %}">
+                                <i class="bi bi-plus-circle"></i> Nueva Práctica
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'perfil_empresa' %}">
+                                <i class="bi bi-person"></i> Mi Perfil
+                            </a>
+                        </li>
+                    <!-- Menú para Facultades -->
+                    {% elif user.facultad %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'panel_facultad' %}">
+                                <i class="bi bi-grid-fill"></i> Panel de Control
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'mis_practicas_facultad' %}">
+                                <i class="bi bi-briefcase"></i> Mis Prácticas Internas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'crear_practica_facultad' %}">
+                                <i class="bi bi-plus-circle"></i> Nueva Práctica Interna
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'perfil_facultad' %}">
+                                <i class="bi bi-person"></i> Mi Perfil
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    <!-- Cerrar Sesión (común para todos) -->
+                    <li class="nav-item">
+                        <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
+                            {% csrf_token %}
+                        </form>
+                        <a class="nav-link" href="#" onclick="document.getElementById('logout-form').submit(); return false;">
+                            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-plus"></i> Registrarse
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'registro_estudiante' %}">
+                                <i class="bi bi-mortarboard"></i> Como Estudiante
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'registro_empresa' %}">
+                                <i class="bi bi-building"></i> Como Empresa
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'registro_facultad' %}">
+                                <i class="bi bi-mortarboard-fill"></i> Como Facultad
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">
+                            <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="container mt-4 mb-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="animation: slideInDown 0.3s ease-out;">
+                    <i class="bi bi-{% if message.tags == 'success' %}check-circle-fill{% elif message.tags == 'error' or message.tags == 'danger' %}x-circle-fill{% elif message.tags == 'warning' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %}"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-uleam mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{% static 'img/LOGO-ULEAM.png' %}" alt="Logo ULEAM" height="50" class="me-3">
+                        <div>
+                            <h5 class="mb-0">Universidad Laica Eloy Alfaro de Manabí</h5>
+                            <small class="opacity-75">Sistema de Prácticas Pre Profesionales</small>
+                        </div>
+                    </div>
+                    <p class="opacity-90">Conectando estudiantes con oportunidades de práctica profesional tanto en empresas externas como en facultades internas de la universidad.</p>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3">Prácticas</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{% url 'lista_practicas' %}">Prácticas Externas</a></li>
+                        <li class="mb-2"><a href="#">Prácticas Internas</a></li>
+                        <li class="mb-2"><a href="#">Buscar por Sector</a></li>
+                        {% if user.is_authenticated %}
+                            <li class="mb-2"><a href="{% url 'mis_inscripciones' %}">Mis Inscripciones</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3">Empresas</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{% url 'lista_empresas' %}">Ver Empresas</a></li>
+                        <li class="mb-2"><a href="{% url 'registro_empresa' %}">Registrar Empresa</a></li>
+                        <li class="mb-2"><a href="#">Publicar Práctica</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3">Facultades</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{% url 'registro_facultad' %}">Registrar Facultad</a></li>
+                        <li class="mb-2"><a href="#">Prácticas Internas</a></li>
+                        <li class="mb-2"><a href="#">Servicios Académicos</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6 class="fw-bold mb-3">Estudiantes</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{% url 'registro_estudiante' %}">Registrarse</a></li>
+                        <li class="mb-2"><a href="{% url 'login' %}">Iniciar Sesión</a></li>
+                        <li class="mb-2"><a href="#">Perfil</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4" style="border-color: rgba(255,255,255,0.3);">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 opacity-75">&copy; 2024 Universidad Laica Eloy Alfaro de Manabí. Todos los derechos reservados.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="d-flex justify-content-md-end gap-3">
+                        <a href="#" class="text-white"><i class="bi bi-facebook fs-5"></i></a>
+                        <a href="#" class="text-white"><i class="bi bi-twitter fs-5"></i></a>
+                        <a href="#" class="text-white"><i class="bi bi-instagram fs-5"></i></a>
+                        <a href="#" class="text-white"><i class="bi bi-linkedin fs-5"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chatbot HTML -->
+    <div id="chatbot-container">
+        <div id="chatbot-header">
+            <span>🤖 Asistente Virtual ULEAM</span>
+            <button id="close-chatbot" style="background:none; border:none; color:white; font-size: 20px;">&times;</button>
+        </div>
+        <div id="chatbot-body">
+            <div class="chat-message bot-message">¡Hola! 😊 Soy tu asistente virtual de ULEAM.<br><br>Selecciona una opción para ayudarte mejor:</div>
+            <div class="chat-options">
+                <button class="chat-option-btn full-width" data-message="Ver prácticas disponibles">
+                    <i class="bi bi-briefcase-fill"></i> � Mostrar prácticas externas
+                </button>
+                <button class="chat-option-btn full-width" data-message="Ver prácticas internas">
+                    <i class="bi bi-bank-fill"></i> 🎓 Mostrar prácticas internas
+                </button>
+                <button class="chat-option-btn full-width" data-message="Lista de empresas">
+                    <i class="bi bi-building-fill"></i> 🏢 Ver empresas colaboradoras
+                </button>
+                <button class="chat-option-btn full-width" data-message="¿Cómo me registro?">
+                    <i class="bi bi-person-plus-fill"></i> � ¿Cómo me registro?
+                </button>
+                <button class="chat-option-btn full-width" data-message="¿Cómo me inscribo en una práctica?">
+                    <i class="bi bi-clipboard-check-fill"></i> ✅ ¿Cómo inscribirme?
+                </button>
+                <button class="chat-option-btn full-width" data-message="¿Qué documentos necesito?">
+                    <i class="bi bi-file-earmark-text-fill"></i> 📄 Documentos requeridos
+                </button>
+                <button class="chat-option-btn full-width" data-message="¿Cómo funciona la evaluación?">
+                    <i class="bi bi-star-fill"></i> ⭐ Sistema de evaluaciones
+                </button>
+                <button class="chat-option-btn full-width" data-message="Olvidé mi contraseña">
+                    <i class="bi bi-key-fill"></i> 🔑 Recuperar contraseña
+                </button>
+                <button class="chat-option-btn full-width" data-message="Contacto de soporte">
+                    <i class="bi bi-headset"></i> 📞 Contactar soporte
+                </button>
+            </div>
+        </div>
+        <div id="chatbot-footer">
+            <input type="text" id="chatbot-input" placeholder="O escribe tu pregunta aquí...">
+            <button id="chatbot-send"><i class="bi bi-send-fill"></i></button>
+        </div>
+    </div>
+    <button id="chatbot-toggle"><i class="bi bi-chat-dots-fill"></i></button>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatbotContainer = document.getElementById('chatbot-container');
+            const chatbotToggle = document.getElementById('chatbot-toggle');
+            const closeChatbot = document.getElementById('close-chatbot');
+            const chatbotBody = document.getElementById('chatbot-body');
+            const chatbotInput = document.getElementById('chatbot-input');
+            const chatbotSend = document.getElementById('chatbot-send');
+
+            chatbotToggle.addEventListener('click', () => {
+                chatbotContainer.style.display = 'flex';
+                chatbotToggle.style.display = 'none';
+            });
+
+            closeChatbot.addEventListener('click', () => {
+                chatbotContainer.style.display = 'none';
+                chatbotToggle.style.display = 'flex';
+            });
+
+            function addMessage(message, sender) {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('chat-message', sender + '-message');
+                
+                // Convertir formato markdown simple a HTML
+                let formattedMessage = message
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **negrita**
+                    .replace(/^\s*•\s+/gm, '• ')  // Bullets
+                    .replace(/^\s*\d+\.\s+/gm, (match) => match)  // Números
+                    .replace(/\n/g, '<br>');  // Saltos de línea
+                
+                messageElement.innerHTML = formattedMessage;
+                chatbotBody.appendChild(messageElement);
+                chatbotBody.scrollTop = chatbotBody.scrollHeight;
+            }
+
+            function addBotMessageWithOptions(message, options = null) {
+                // Agregar el mensaje del bot
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('chat-message', 'bot-message');
+                
+                // Convertir formato markdown simple a HTML
+                let formattedMessage = message
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/^\s*•\s+/gm, '• ')
+                    .replace(/^\s*\d+\.\s+/gm, (match) => match)
+                    .replace(/\n/g, '<br>');
+                
+                messageElement.innerHTML = formattedMessage;
+                chatbotBody.appendChild(messageElement);
+
+                // Agregar opciones si existen
+                if (options && options.length > 0) {
+                    const optionsContainer = document.createElement('div');
+                    optionsContainer.classList.add('chat-options');
+                    
+                    options.forEach(option => {
+                        const btn = document.createElement('button');
+                        btn.classList.add('chat-option-btn');
+                        btn.innerHTML = `<i class="bi ${option.icon}"></i> ${option.text}`;
+                        btn.dataset.message = option.message;
+                        btn.addEventListener('click', function() {
+                            sendMessage(this.dataset.message);
+                        });
+                        optionsContainer.appendChild(btn);
+                    });
+                    
+                    chatbotBody.appendChild(optionsContainer);
+                }
+
+                chatbotBody.scrollTop = chatbotBody.scrollHeight;
+            }
+
+            async function sendMessage(customMessage = null) {
+                const message = customMessage || chatbotInput.value.trim();
+                if (message === '') return;
+
+                addMessage(message, 'user');
+                if (!customMessage) {
+                    chatbotInput.value = '';
+                }
+
+                try {
+                    const response = await fetch("{% url 'chatbot' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ message: message })
+                    });
+                    const data = await response.json();
+                    
+                    // Usar las opciones que vienen del backend
+                    if (data.options && data.options.length > 0) {
+                        addBotMessageWithOptions(data.response, data.options);
+                    } else {
+                        addMessage(data.response, 'bot');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    addMessage('Lo siento, ha ocurrido un error. Por favor, intenta de nuevo.', 'bot');
+                }
+            }
+
+            // Agregar event listeners a los botones de opciones iniciales
+            document.querySelectorAll('.chat-option-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    sendMessage(this.dataset.message);
+                });
+            });
+
+            chatbotSend.addEventListener('click', () => sendMessage());
+            chatbotInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

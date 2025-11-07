@@ -1,0 +1,139 @@
+{% extends 'inscripciones/base.html' %}
+{% load static %}
+
+{% block title %}Evaluar Postulante{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-responsive table td select {
+        width: 100%;
+        padding: 0.4rem;
+        border: 2px solid #E9ECEF;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #2C3E50;
+        background: white;
+        transition: all 0.3s ease;
+    }
+    
+    .table-responsive table td select:focus {
+        outline: none;
+        border-color: var(--uleam-red);
+        box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+    }
+    
+    .table-responsive table td {
+        padding: 0.5rem;
+        vertical-align: middle;
+    }
+    
+    .table-responsive table th {
+        padding: 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    .table-bordered {
+        border: 2px solid #DEE2E6;
+    }
+    
+    .table-bordered td,
+    .table-bordered th {
+        border: 1px solid #DEE2E6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="form-container" style="max-width: 900px;">
+        <div class="form-header">
+            <h2>
+                <i class="bi bi-clipboard-check"></i> Evaluar Postulante
+            </h2>
+            <p>Revisa la información y toma una decisión sobre la postulación</p>
+        </div>
+
+        <!-- Información de la Práctica -->
+        <div class="card-uleam mb-4">
+            <div class="card-body">
+                <h5 style="color: var(--uleam-red); margin-bottom: 1rem;">
+                    <i class="bi bi-briefcase"></i> Información de la Práctica
+                </h5>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <strong>Título:</strong> {{ inscripcion.practica.titulo }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Empresa:</strong> {{ empresa.nombre }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Fecha Inicio:</strong> {{ inscripcion.practica.fecha_inicio|date:"d/m/Y" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del Estudiante -->
+        <div class="card-uleam mb-4">
+            <div class="card-body">
+                <h5 style="color: var(--uleam-red); margin-bottom: 1rem;">
+                    <i class="bi bi-person"></i> Información del Estudiante
+                </h5>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <strong>Nombre:</strong> {{ inscripcion.estudiante.user.get_full_name }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Código:</strong> {{ inscripcion.estudiante.codigo_estudiante }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Carrera:</strong> {{ inscripcion.estudiante.carrera.nombre }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Email:</strong> {{ inscripcion.estudiante.user.email }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Teléfono:</strong> {{ inscripcion.estudiante.telefono }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Fecha Inscripción:</strong> {{ inscripcion.fecha_inscripcion|date:"d/m/Y H:i" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Evaluación Final -->
+        <div class="card-uleam">
+            <div class="card-body">
+                <h5 style="color: var(--uleam-red); margin-bottom: 1.5rem;">
+                    <i class="bi bi-check-square"></i> Decisión Final
+                </h5>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="observaciones" class="form-label">
+                            <i class="bi bi-chat-text"></i> Observaciones
+                        </label>
+                        <textarea name="observaciones" id="observaciones" class="form-control" rows="4" placeholder="Ingrese comentarios o razones de la decisión (opcional)">{{ inscripcion.observaciones }}</textarea>
+                        <small class="form-text">Estas observaciones serán visibles para el estudiante</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" name="accion" value="aprobar" class="btn-submit" style="background: linear-gradient(135deg, #28A745, #20C997);">
+                            <i class="bi bi-check-circle"></i> Aprobar Postulante
+                        </button>
+                        <button type="submit" name="accion" value="rechazar" class="btn-submit" style="background: linear-gradient(135deg, #DC3545, #C82333);">
+                            <i class="bi bi-x-circle"></i> Rechazar Postulante
+                        </button>
+                        <a href="{% url 'postulantes_practica' inscripcion.practica.pk %}" class="btn-cancel">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: sistema-practicas
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: "bash build.sh"
+    startCommand: "gunicorn sistema_practicas.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.15
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com,localhost"
+      - key: DATABASE_URL
+        value: postgresql://postgres.ulnphtjyndxsebosbdcp:Juanmero2002@aws-1-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+    autoDeploy: true

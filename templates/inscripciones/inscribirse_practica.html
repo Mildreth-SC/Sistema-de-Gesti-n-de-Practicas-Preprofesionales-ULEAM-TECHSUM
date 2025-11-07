@@ -1,0 +1,160 @@
+{% extends 'inscripciones/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Inscribirse - {{ practica.titulo }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'lista_practicas' %}">Prácticas</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'detalle_practica' practica.pk %}">{{ practica.titulo }}</a></li>
+            <li class="breadcrumb-item active">Inscribirse</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <!-- Información de la Práctica -->
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-briefcase"></i> Información de la Práctica
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title">{{ practica.titulo }}</h6>
+                    <p class="text-muted">{{ practica.descripcion|truncatewords:20 }}</p>
+                    
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">Empresa</small>
+                            <div class="fw-bold">{{ practica.empresa.nombre }}</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Sector</small>
+                            <div class="fw-bold">{{ practica.empresa.sector }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <small class="text-muted">Duración</small>
+                            <div class="fw-bold">{{ practica.duracion_semanas }} semanas</div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Horas/Semana</small>
+                            <div class="fw-bold">{{ practica.horas_semana }}h</div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Cupos</small>
+                            <div class="fw-bold text-success">{{ practica.cupos_disponibles }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-calendar"></i>
+                        <strong>Fecha límite:</strong> {{ practica.fecha_limite_inscripcion|date:"d/m/Y H:i" }}
+                    </div>
+                    
+                    <div class="text-center">
+                        <a href="{% url 'detalle_practica' practica.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i> Ver Detalles Completos
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Requisitos -->
+            <div class="card shadow mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-list-check"></i> Requisitos
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="small">{{ practica.requisitos|linebreaks }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Formulario de Inscripción -->
+        <div class="col-lg-8">
+            <div class="form-container" style="margin: 0;">
+                <div class="form-header">
+                    <h2>
+                        <i class="bi bi-person-plus"></i> Formulario de Inscripción
+                    </h2>
+                </div>
+                
+                <div class="alert-uleam alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Importante:</strong> Una vez enviada la inscripción, no podrás modificarla. 
+                    Asegúrate de revisar toda la información antes de continuar.
+                </div>
+                
+                <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h6 class="text-primary border-bottom pb-2">
+                                <i class="bi bi-chat-text"></i> Información Adicional
+                            </h6>
+                            <p class="text-muted small">
+                                Comparte cualquier información adicional que consideres relevante para tu aplicación.
+                                Esto puede incluir motivaciones, experiencia previa, habilidades específicas, etc.
+                            </p>
+                            {{ form.observaciones|as_crispy_field }}
+                        </div>
+                        
+                        <!-- Documentos Requeridos -->
+                        <div class="mb-4">
+                            <h6 class="text-primary border-bottom pb-2">
+                                <i class="bi bi-file-earmark"></i> Documentos Requeridos
+                            </h6>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Nota:</strong> Los siguientes documentos son requeridos para completar tu inscripción:
+                                <ul class="mb-0 mt-2">
+                                    <li>Curriculum Vitae actualizado</li>
+                                    <li>Carta de presentación</li>
+                                    <li>Certificado de notas</li>
+                                    <li>Carta de recomendación (opcional)</li>
+                                </ul>
+                            </div>
+                            <p class="text-muted small">
+                                Podrás subir estos documentos después de completar la inscripción inicial.
+                            </p>
+                        </div>
+                        
+                        <!-- Confirmación -->
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="confirmacion" required>
+                            <label class="form-check-label" for="confirmacion">
+                                <strong style="color: var(--uleam-red);">Confirmo que:</strong>
+                                <ul class="mb-0 mt-2" style="list-style: none; padding-left: 0;">
+                                    <li>✓ He leído y comprendo los requisitos de la práctica</li>
+                                    <li>✓ Estoy disponible para la duración completa de la práctica</li>
+                                    <li>✓ Toda la información proporcionada es veraz</li>
+                                    <li>✓ Acepto los términos y condiciones del sistema</li>
+                                </ul>
+                            </label>
+                        </div>
+                        
+                        <!-- Botones -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn-submit">
+                                <i class="bi bi-check-circle"></i> Confirmar Inscripción
+                            </button>
+                            <a href="{% url 'detalle_practica' practica.pk %}" class="btn-cancel">
+                                <i class="bi bi-arrow-left"></i> Volver
+                            </a>
+                        </div>
+                    </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

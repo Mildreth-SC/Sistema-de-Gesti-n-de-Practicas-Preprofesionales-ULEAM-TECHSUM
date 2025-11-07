@@ -1,0 +1,224 @@
+{% extends 'inscripciones/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ practica.titulo }} - Sistema de Prácticas{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'lista_practicas_internas' %}">Prácticas Internas</a></li>
+            <li class="breadcrumb-item active">{{ practica.titulo }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <!-- Información Principal -->
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h2 class="mb-0">
+                        <i class="bi bi-heart"></i> {{ practica.titulo }}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="text-success">
+                                <i class="bi bi-mortarboard-fill"></i> Facultad
+                            </h5>
+                            <p class="mb-3">{{ practica.facultad.nombre }}</p>
+                            
+                            <h5 class="text-success">
+                                <i class="bi bi-gear"></i> Tipo de Servicio
+                            </h5>
+                            <p class="mb-3">{{ practica.get_tipo_servicio_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-success">
+                                <i class="bi bi-clock"></i> Duración
+                            </h5>
+                            <p class="mb-3">{{ practica.duracion_semanas }} semanas</p>
+                            
+                            <h5 class="text-success">
+                                <i class="bi bi-people"></i> Cupos Disponibles
+                            </h5>
+                            <p class="mb-0">
+                                <span class="badge bg-success fs-6">{{ practica.cupos_disponibles }} de {{ practica.cupos_totales }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="bi bi-calendar-week text-success fs-2"></i>
+                                <h6 class="mt-2">Duración</h6>
+                                <p class="mb-0 fw-bold">{{ practica.duracion_meses }} meses</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="bi bi-clock text-success fs-2"></i>
+                                <h6 class="mt-2">Horas Totales</h6>
+                                <p class="mb-0 fw-bold">{{ practica.horas_totales }}h</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="bi bi-calendar-check text-success fs-2"></i>
+                                <h6 class="mt-2">Inicio</h6>
+                                <p class="mb-0 fw-bold">{{ practica.fecha_inicio|date:"d/m/Y" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="bi bi-calendar-x text-success fs-2"></i>
+                                <h6 class="mt-2">Fin</h6>
+                                <p class="mb-0 fw-bold">{{ practica.fecha_fin|date:"d/m/Y" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h5 class="text-success">
+                        <i class="bi bi-file-text"></i> Descripción del Proyecto
+                    </h5>
+                    <p class="mb-4">{{ practica.descripcion_proyecto|linebreaks }}</p>
+                    
+                    <h5 class="text-success">
+                        <i class="bi bi-list-check"></i> Requisitos
+                    </h5>
+                    <p class="mb-4">{{ practica.requisitos|linebreaks }}</p>
+                    
+                    {% if practica.ubicacion %}
+                        <h5 class="text-success">
+                            <i class="bi bi-geo-alt"></i> Ubicación
+                        </h5>
+                        <p class="mb-4">{{ practica.ubicacion }}</p>
+                    {% endif %}
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Fecha límite de inscripción:</strong> {{ practica.fecha_limite_inscripcion|date:"d/m/Y H:i" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Panel Lateral -->
+        <div class="col-lg-4">
+            <!-- Estado de Inscripción -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-check"></i> Estado de Inscripción
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if inscrito %}
+                        {% if inscripcion.estado == 'pendiente' %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-clock"></i>
+                                <strong>Inscripción Pendiente</strong>
+                                <p class="mb-0">Tu inscripción está siendo evaluada.</p>
+                            </div>
+                        {% elif inscripcion.estado == 'aprobada' %}
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle"></i>
+                                <strong>Inscripción Aprobada</strong>
+                                <p class="mb-0">¡Felicitaciones! Has sido seleccionado.</p>
+                            </div>
+                        {% elif inscripcion.estado == 'rechazada' %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-x-circle"></i>
+                                <strong>Inscripción Rechazada</strong>
+                                <p class="mb-0">Tu inscripción no fue seleccionada.</p>
+                            </div>
+                        {% elif inscripcion.estado == 'cancelada' %}
+                            <div class="alert alert-secondary">
+                                <i class="bi bi-dash-circle"></i>
+                                <strong>Inscripción Cancelada</strong>
+                                <p class="mb-0">Has cancelado tu inscripción.</p>
+                            </div>
+                        {% endif %}
+                        
+                        <p class="text-muted small">
+                            Fecha de inscripción: {{ inscripcion.fecha_inscripcion|date:"d/m/Y H:i" }}
+                        </p>
+                        
+                        {% if inscripcion.estado == 'pendiente' %}
+                            <a href="{% url 'cancelar_inscripcion_interna' inscripcion.pk %}" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-x-circle"></i> Cancelar Inscripción
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        {% if practica.cupos_disponibles > 0 and practica.fecha_limite_inscripcion >= now %}
+                            {% if user.is_authenticated %}
+                                {% if user.estudiante %}
+                                    <a href="{% url 'inscribirse_practica_interna' practica.pk %}" class="btn btn-success btn-lg">
+                                        <i class="bi bi-person-plus"></i> Inscribirse
+                                    </a>
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        <strong>Solo estudiantes</strong>
+                                        <p class="mb-0">Solo los estudiantes pueden inscribirse en prácticas.</p>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i>
+                                    <p class="mb-2">Debes iniciar sesión como estudiante para inscribirte.</p>
+                                    <a href="{% url 'login' %}" class="btn btn-success btn-sm">
+                                        <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>No disponible</strong>
+                                <p class="mb-0">Esta práctica no está disponible para inscripción.</p>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Información de la Facultad -->
+            <div class="card shadow">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-mortarboard-fill"></i> Sobre la Facultad
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-mortarboard-fill text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    
+                    <h6>{{ practica.facultad.nombre }}</h6>
+                    <p class="text-muted small">{{ practica.facultad.descripcion|truncatewords:20|default:"Prácticas Internas ULEAM" }}</p>
+                    
+                    <div class="row text-center">
+                        <div class="col-12 mb-2">
+                            <small class="text-muted">Tipo de Servicio</small>
+                            <div class="fw-bold">{{ practica.get_tipo_servicio_display }}</div>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted">Duración</small>
+                            <div class="fw-bold">{{ practica.duracion_semanas }} semanas</div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <span class="badge bg-success">Práctica Interna</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

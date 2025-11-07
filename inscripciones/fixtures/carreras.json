@@ -1,0 +1,62 @@
+[
+    {
+        "model": "inscripciones.carrera",
+        "pk": 1,
+        "fields": {
+            "nombre": "Ingeniería de Sistemas",
+            "codigo": "IS",
+            "descripcion": "Carrera enfocada en el desarrollo de software y sistemas informáticos",
+            "activa": true
+        }
+    },
+    {
+        "model": "inscripciones.carrera",
+        "pk": 2,
+        "fields": {
+            "nombre": "Ingeniería Industrial",
+            "codigo": "II",
+            "descripcion": "Carrera enfocada en la optimización de procesos industriales",
+            "activa": true
+        }
+    },
+    {
+        "model": "inscripciones.carrera",
+        "pk": 3,
+        "fields": {
+            "nombre": "Administración de Empresas",
+            "codigo": "AE",
+            "descripcion": "Carrera enfocada en la gestión empresarial",
+            "activa": true
+        }
+    },
+    {
+        "model": "inscripciones.carrera",
+        "pk": 4,
+        "fields": {
+            "nombre": "Contabilidad",
+            "codigo": "CO",
+            "descripcion": "Carrera enfocada en la gestión financiera y contable",
+            "activa": true
+        }
+    },
+    {
+        "model": "inscripciones.carrera",
+        "pk": 5,
+        "fields": {
+            "nombre": "Marketing",
+            "codigo": "MK",
+            "descripcion": "Carrera enfocada en estrategias de mercado y ventas",
+            "activa": true
+        }
+    },
+    {
+        "model": "inscripciones.carrera",
+        "pk": 6,
+        "fields": {
+            "nombre": "Psicología",
+            "codigo": "PS",
+            "descripcion": "Carrera enfocada en el comportamiento humano y salud mental",
+            "activa": true
+        }
+    }
+]
