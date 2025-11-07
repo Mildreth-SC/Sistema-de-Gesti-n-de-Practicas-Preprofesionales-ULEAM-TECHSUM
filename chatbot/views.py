@@ -8,8 +8,12 @@ import json
 import re
 from openai import OpenAI
 
-# Inicializar cliente de OpenAI (la API key se debe configurar en .env o variables de entorno)
-client = OpenAI(api_key=config('OPENAI_API_KEY', default=''))
+def get_openai_client():
+    """Obtener cliente de OpenAI solo cuando se necesite"""
+    api_key = config('OPENAI_API_KEY', default='')
+    if api_key:
+        return OpenAI(api_key=api_key)
+    return None
 
 def chatbot_view(request):
     if request.method == 'POST':
@@ -256,6 +260,12 @@ Asistente: "¡Perfecto! 👨‍💻 De las [X] prácticas disponibles, estas son
 
 Recuerda: Eres útil, preciso y siempre basas tus respuestas en la información real del sistema."""
 
+        # Obtener cliente OpenAI
+        client = get_openai_client()
+        if not client:
+            # Si no hay cliente OpenAI, usar sistema de fallback
+            return process_message(message)
+        
         # Llamar a OpenAI
         response = client.chat.completions.create(
             model="gpt-4o-mini",
