@@ -10,7 +10,7 @@ pip install --upgrade pip
 
 # Instalar dependencias
 echo "📚 Instalando dependencias..."
-pip install -r requirements.txt
+pip install --no-cache-dir -r requirements.txt
 
 # Recolectar archivos estáticos
 echo "🎨 Recolectando archivos estáticos..."
