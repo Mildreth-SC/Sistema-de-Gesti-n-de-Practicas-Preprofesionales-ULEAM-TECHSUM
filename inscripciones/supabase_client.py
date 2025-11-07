@@ -178,17 +178,18 @@ class SupabaseAuthClient:
             if response.user and response.session:
                 logger.info(f"✅ Login exitoso: {email}")
                 
-                # Verificar si el email está confirmado
-                if not response.user.email_confirmed_at:
-                    logger.warning(f"⚠️ Email no confirmado: {email}")
-                    return {
-                        "success": False,
-                        "user": None,
-                        "session": None,
-                        "access_token": None,
-                        "refresh_token": None,
-                        "message": "Por favor, confirma tu email antes de iniciar sesión"
-                    }
+                # NOTA: Verificación de email desactivada para usar Django Auth estándar
+                # Si usas Supabase Auth para login, descomenta este bloque:
+                # if not response.user.email_confirmed_at:
+                #     logger.warning(f"⚠️ Email no confirmado: {email}")
+                #     return {
+                #         "success": False,
+                #         "user": None,
+                #         "session": None,
+                #         "access_token": None,
+                #         "refresh_token": None,
+                #         "message": "Por favor, confirma tu email antes de iniciar sesión"
+                #     }
                 
                 return {
                     "success": True,

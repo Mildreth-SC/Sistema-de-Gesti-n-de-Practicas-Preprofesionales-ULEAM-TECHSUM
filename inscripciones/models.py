@@ -338,6 +338,31 @@ class DocumentoInscripcion(models.Model):
         return f"{self.inscripcion} - {self.nombre}"
 
 
+class DocumentoInscripcionInterna(models.Model):
+    """Documentos adjuntos a inscripciones internas (facultades)"""
+    TIPO_CHOICES = [
+        ('cv', 'Curriculum Vitae'),
+        ('carta_presentacion', 'Carta de Presentación'),
+        ('certificado_notas', 'Certificado de Notas'),
+        ('carta_recomendacion', 'Carta de Recomendación'),
+        ('otro', 'Otro'),
+    ]
+    
+    inscripcion_interna = models.ForeignKey('InscripcionInterna', on_delete=models.CASCADE, related_name='documentos')
+    tipo = models.CharField(max_length=30, choices=TIPO_CHOICES)
+    nombre = models.CharField(max_length=200)
+    archivo = models.FileField(upload_to='documentos_inscripcion_interna/')
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = "Documento de Inscripción Interna"
+        verbose_name_plural = "Documentos de Inscripción Interna"
+        ordering = ['-fecha_subida']
+    
+    def __str__(self):
+        return f"{self.inscripcion_interna} - {self.nombre}"
+
+
 class Facultad(models.Model):
     ESTADO_APROBACION_CHOICES = [
         ('pendiente', 'Pendiente de Aprobación'),

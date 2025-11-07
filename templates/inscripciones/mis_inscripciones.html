@@ -48,12 +48,21 @@
         </div>
     </div>
     
-    <!-- Lista de Inscripciones -->
+    <!-- Prácticas Externas (Empresas) -->
+    {% if inscripciones_externas %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3">
+                <i class="bi bi-building"></i> Prácticas en Empresas
+                <span class="badge bg-primary">{{ inscripciones_externas.count }}</span>
+            </h3>
+        </div>
+    </div>
     <div class="row">
-        {% for inscripcion in inscripciones %}
+        {% for inscripcion in inscripciones_externas %}
             <div class="col-lg-6 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card h-100 shadow-sm border-primary">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-light">
                         <h5 class="mb-0">{{ inscripcion.practica.titulo }}</h5>
                         {% if inscripcion.estado == 'pendiente' %}
                             <span class="badge bg-warning">
@@ -74,6 +83,11 @@
                         {% endif %}
                     </div>
                     <div class="card-body">
+                        <div class="mb-2">
+                            <span class="badge" style="background: linear-gradient(135deg, #667EEA, #764BA2); color: white;">
+                                <i class="bi bi-building"></i> Práctica Externa
+                            </span>
+                        </div>
                         <div class="row mb-3">
                             <div class="col-6">
                                 <small class="text-muted">Empresa</small>
@@ -145,24 +159,143 @@
                     </div>
                 </div>
             </div>
-        {% empty %}
-            <div class="col-12">
-                <div class="card shadow">
-                    <div class="card-body text-center py-5">
-                        <i class="bi bi-inbox display-1 text-muted"></i>
-                        <h3 class="mt-3 text-muted">No tienes inscripciones</h3>
-                        <p class="text-muted mb-4">Comienza explorando las prácticas disponibles y encuentra la oportunidad perfecta para ti.</p>
-                        <a href="{% url 'lista_practicas' %}" class="btn btn-primary btn-lg">
-                            <i class="bi bi-search"></i> Buscar Prácticas
-                        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Prácticas Internas (Facultades) -->
+    {% if inscripciones_internas %}
+    <div class="row mb-4 mt-5">
+        <div class="col-12">
+            <h3 class="mb-3">
+                <i class="bi bi-mortarboard"></i> Prácticas Internas (Facultades)
+                <span class="badge bg-success">{{ inscripciones_internas.count }}</span>
+            </h3>
+        </div>
+    </div>
+    <div class="row">
+        {% for inscripcion in inscripciones_internas %}
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 shadow-sm border-success">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-light">
+                        <h5 class="mb-0">{{ inscripcion.practica_interna.titulo }}</h5>
+                        {% if inscripcion.estado == 'pendiente' %}
+                            <span class="badge bg-warning">
+                                <i class="bi bi-clock"></i> Pendiente
+                            </span>
+                        {% elif inscripcion.estado == 'aprobada' %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> Aprobada
+                            </span>
+                        {% elif inscripcion.estado == 'rechazada' %}
+                            <span class="badge bg-danger">
+                                <i class="bi bi-x-circle"></i> Rechazada
+                            </span>
+                        {% elif inscripcion.estado == 'cancelada' %}
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-dash-circle"></i> Cancelada
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <span class="badge" style="background: linear-gradient(135deg, #11998E, #38EF7D); color: white;">
+                                <i class="bi bi-mortarboard"></i> Práctica Interna
+                            </span>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Facultad</small>
+                                <div class="fw-bold">{{ inscripcion.practica_interna.facultad.nombre }}</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Tipo de Servicio</small>
+                                <div class="fw-bold">{{ inscripcion.practica_interna.get_tipo_servicio_display }}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Duración</small>
+                                <div class="fw-bold">{{ inscripcion.practica_interna.duracion_semanas }} semanas</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Horas/Semana</small>
+                                <div class="fw-bold">{{ inscripcion.practica_interna.horas_semana }}h</div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Fecha de Inscripción</small>
+                                <div class="fw-bold">{{ inscripcion.fecha_inscripcion|date:"d/m/Y H:i" }}</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Inicio de Práctica</small>
+                                <div class="fw-bold">{{ inscripcion.practica_interna.fecha_inicio|date:"d/m/Y" }}</div>
+                            </div>
+                        </div>
+                        
+                        {% if inscripcion.observaciones %}
+                            <div class="mb-3">
+                                <small class="text-muted">Observaciones</small>
+                                <div class="small">{{ inscripcion.observaciones }}</div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if inscripcion.fecha_evaluacion %}
+                            <div class="mb-3">
+                                <small class="text-muted">Evaluado el</small>
+                                <div class="small">{{ inscripcion.fecha_evaluacion|date:"d/m/Y H:i" }}</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-light">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'detalle_practica_interna' inscripcion.practica_interna.pk %}" class="btn btn-outline-primary" title="Ver Práctica">
+                                    <i class="bi bi-eye"></i> Ver Práctica
+                                </a>
+                            </div>
+                            
+                            {% if inscripcion.estado == 'pendiente' %}
+                                <button class="btn btn-outline-danger btn-sm" onclick="alert('Funcionalidad de cancelación para prácticas internas próximamente')">
+                                    <i class="bi bi-x-circle"></i> Cancelar
+                                </button>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
         {% endfor %}
     </div>
+    {% endif %}
+    
+    <!-- Mensaje cuando no hay inscripciones -->
+    {% if not inscripciones_externas and not inscripciones_internas %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <h3 class="mt-3 text-muted">No tienes inscripciones</h3>
+                    <p class="text-muted mb-4">Comienza explorando las prácticas disponibles y encuentra la oportunidad perfecta para ti.</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'lista_practicas' %}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-building"></i> Prácticas en Empresas
+                        </a>
+                        <a href="{% url 'lista_practicas_internas' %}" class="btn btn-success btn-lg">
+                            <i class="bi bi-mortarboard"></i> Prácticas Internas
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     
     <!-- Estadísticas -->
-    {% if inscripciones %}
+    {% if total_inscripciones > 0 %}
         <div class="row mt-5">
             <div class="col-12">
                 <div class="card shadow">
@@ -173,27 +306,21 @@
                     </div>
                     <div class="card-body">
                         <div class="row text-center">
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="border-end">
-                                    <h3 class="text-primary">{{ inscripciones.count }}</h3>
+                                    <h3 class="text-primary">{{ total_inscripciones }}</h3>
                                     <small class="text-muted">Total</small>
                                 </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <div class="border-end">
-                                    <h3 class="text-warning">{{ inscripciones|length }}</h3>
-                                    <small class="text-muted">Pendientes</small>
+                                    <h3 class="text-info">{{ inscripciones_externas.count }}</h3>
+                                    <small class="text-muted">Externas</small>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="border-end">
-                                    <h3 class="text-success">{{ inscripciones|length }}</h3>
-                                    <small class="text-muted">Aprobadas</small>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <h3 class="text-danger">{{ inscripciones|length }}</h3>
-                                <small class="text-muted">Rechazadas</small>
+                            <div class="col-md-4">
+                                <h3 class="text-success">{{ inscripciones_internas.count }}</h3>
+                                <small class="text-muted">Internas</small>
                             </div>
                         </div>
                     </div>

@@ -1,7 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
-from . import auth_views as supabase_auth_views
+# from . import auth_views as supabase_auth_views  # ← Comentado: Usamos solo Django Auth
 
 urlpatterns = [
     # Páginas principales
@@ -13,17 +13,17 @@ urlpatterns = [
     path('empresas/', views.lista_empresas, name='lista_empresas'),
     path('empresas/<int:pk>/', views.detalle_empresa, name='detalle_empresa'),
     
-    # Autenticación con Supabase Auth
-    path('registro/', supabase_auth_views.registro_estudiante, name='registro_estudiante'),
-    path('registro-empresa/', supabase_auth_views.registro_empresa, name='registro_empresa'),
-    path('registro-facultad/', supabase_auth_views.registro_facultad, name='registro_facultad'),
-    path('login/', supabase_auth_views.login_view, name='login'),
-    path('logout/', supabase_auth_views.logout_view, name='logout'),
+    # Autenticación con Django Auth (NO Supabase Auth)
+    path('registro/', views.registro_estudiante, name='registro_estudiante'),
+    path('registro-empresa/', views.registro_empresa, name='registro_empresa'),
+    path('registro-facultad/', views.registro_facultad, name='registro_facultad'),
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
     
-    # Recuperación de contraseña con Supabase Auth
-    path('recuperar-contrasena/', supabase_auth_views.solicitar_reset_password, name='solicitar_restablecimiento_contrasena'),
-    path('auth/reset-password/', supabase_auth_views.reset_password_callback, name='reset_password_callback'),
-    path('auth/callback/', supabase_auth_views.auth_callback, name='auth_callback'),
+    # Recuperación de contraseña (comentadas - Supabase Auth no usado)
+    # path('recuperar-contrasena/', supabase_auth_views.solicitar_reset_password, name='solicitar_restablecimiento_contrasena'),
+    # path('auth/reset-password/', supabase_auth_views.reset_password_callback, name='reset_password_callback'),
+    # path('auth/callback/', supabase_auth_views.auth_callback, name='auth_callback'),
     
     # Perfiles
     path('perfil/', views.perfil_estudiante, name='perfil_estudiante'),

@@ -71,6 +71,8 @@
                             <th>Carrera</th>
                             <th>Email</th>
                             <th>Teléfono</th>
+                            <th>Tipo</th>
+                            <th>Documentos</th>
                             <th>Estado</th>
                             <th>Fecha Inscripción</th>
                             <th>Acciones</th>
@@ -85,6 +87,28 @@
                             <td>{{ inscripcion.estudiante.user.email }}</td>
                             <td>{{ inscripcion.estudiante.telefono }}</td>
                             <td>
+                                {% if inscripcion.estudiante.tipo_usuario == 'estudiante' %}
+                                    <span class="badge badge-info">
+                                        <i class="fas fa-graduation-cap"></i> Estudiante
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-secondary">
+                                        <i class="fas fa-user-graduate"></i> Egresado
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if inscripcion.documentos.count > 0 %}
+                                    <span class="badge badge-success" title="{{ inscripcion.documentos.count }} documento(s)">
+                                        <i class="fas fa-file-alt"></i> {{ inscripcion.documentos.count }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-light text-muted">
+                                        <i class="fas fa-inbox"></i> Sin docs
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
                                 <span class="badge badge-{% if inscripcion.estado == 'pendiente' %}warning{% elif inscripcion.estado == 'aprobada' %}success{% elif inscripcion.estado == 'rechazada' %}danger{% else %}secondary{% endif %}">
                                     {{ inscripcion.get_estado_display }}
                                 </span>
@@ -96,9 +120,11 @@
                                     <i class="fas fa-clipboard-check"></i> Evaluar
                                 </a>
                                 {% else %}
-                                <span class="text-muted">Evaluado</span>
+                                <a href="{% url 'evaluar_postulante' inscripcion.pk %}" class="btn btn-sm btn-info" title="Ver detalles">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
                                 {% if inscripcion.observaciones %}
-                                <br><small>{{ inscripcion.observaciones|truncatewords:10 }}</small>
+                                <br><small class="text-muted">{{ inscripcion.observaciones|truncatewords:10 }}</small>
                                 {% endif %}
                                 {% endif %}
                             </td>

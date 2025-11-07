@@ -206,12 +206,22 @@ def restablecer_contrasena(request, uidb64, token):
 
 
 def home(request):
-    """Vista principal del sistema"""
+    """Vista principal del sistema con filtrado por tipo de usuario"""
     practicas_destacadas = Practica.objects.filter(
         activa=True, 
         estado='disponible',
         fecha_limite_inscripcion__gte=timezone.now()
-    ).order_by('-fecha_publicacion')[:6]
+    )
+    
+    # Filtrar prácticas destacadas según tipo de usuario
+    if request.user.is_authenticated and hasattr(request.user, 'estudiante'):
+        estudiante = request.user.estudiante
+        if estudiante.tipo_usuario == 'estudiante':
+            practicas_destacadas = practicas_destacadas.filter(dirigido_a__in=['estudiantes', 'ambos'])
+        elif estudiante.tipo_usuario == 'egresado':
+            practicas_destacadas = practicas_destacadas.filter(dirigido_a__in=['egresados', 'ambos'])
+    
+    practicas_destacadas = practicas_destacadas.order_by('-fecha_publicacion')[:6]
     
     empresas_destacadas = Empresa.objects.filter(activa=True).order_by('-fecha_registro')[:4]
     
@@ -233,11 +243,24 @@ def home(request):
 
 
 def lista_practicas(request):
-    """Lista todas las prácticas disponibles con filtros"""
+    """Lista todas las prácticas disponibles con filtros según tipo de usuario"""
     practicas = Practica.objects.filter(
         activa=True,
         fecha_limite_inscripcion__gte=timezone.now()
     ).order_by('-fecha_publicacion')
+    
+    # Filtrar por tipo de usuario (estudiante/egresado)
+    if request.user.is_authenticated and hasattr(request.user, 'estudiante'):
+        estudiante = request.user.estudiante
+        if estudiante.tipo_usuario == 'estudiante':
+            # Estudiantes ven prácticas para "estudiantes" o "ambos"
+            practicas = practicas.filter(dirigido_a__in=['estudiantes', 'ambos'])
+        elif estudiante.tipo_usuario == 'egresado':
+            # Egresados ven prácticas para "egresados" o "ambos"
+            practicas = practicas.filter(dirigido_a__in=['egresados', 'ambos'])
+    else:
+        # Usuarios no autenticados ven todas las prácticas disponibles
+        pass
     
     form = BusquedaPracticasForm(request.GET)
     
@@ -271,13 +294,26 @@ def lista_practicas(request):
 
 
 def lista_practicas_internas(request):
-    """Lista todas las prácticas internas activas de facultades"""
+    """Lista todas las prácticas internas activas de facultades según tipo de usuario"""
     form = BusquedaPracticasInternasForm(request.GET or None)
     
     practicas = PracticaInterna.objects.filter(
         activa=True,
         fecha_limite_inscripcion__gte=timezone.now()
     ).select_related('facultad').order_by('-fecha_publicacion')
+    
+    # Filtrar por tipo de usuario (estudiante/egresado)
+    if request.user.is_authenticated and hasattr(request.user, 'estudiante'):
+        estudiante = request.user.estudiante
+        if estudiante.tipo_usuario == 'estudiante':
+            # Estudiantes ven prácticas para "estudiantes" o "ambos"
+            practicas = practicas.filter(dirigido_a__in=['estudiantes', 'ambos'])
+        elif estudiante.tipo_usuario == 'egresado':
+            # Egresados ven prácticas para "egresados" o "ambos"
+            practicas = practicas.filter(dirigido_a__in=['egresados', 'ambos'])
+    else:
+        # Usuarios no autenticados ven todas las prácticas disponibles
+        pass
     
     # Aplicar filtros si existen
     if form.is_valid():
@@ -464,18 +500,26 @@ def inscribirse_practica(request, pk):
 
 @estudiante_required
 def mis_inscripciones(request):
-    """Lista las inscripciones del estudiante"""
+    """Lista todas las inscripciones del estudiante (externas e internas)"""
     try:
         estudiante = Estudiante.objects.get(user=request.user)
-        inscripciones = Inscripcion.objects.filter(estudiante=estudiante).order_by('-fecha_inscripcion')
+        
+        # Obtener inscripciones externas (empresas)
+        inscripciones_externas = Inscripcion.objects.filter(estudiante=estudiante).order_by('-fecha_inscripcion')
+        
+        # Obtener inscripciones internas (facultades)
+        inscripciones_internas = InscripcionInterna.objects.filter(estudiante=estudiante).order_by('-fecha_inscripcion')
         
         # Filtro por estado si está presente
         estado = request.GET.get('estado')
         if estado:
-            inscripciones = inscripciones.filter(estado=estado)
+            inscripciones_externas = inscripciones_externas.filter(estado=estado)
+            inscripciones_internas = inscripciones_internas.filter(estado=estado)
         
         context = {
-            'inscripciones': inscripciones,
+            'inscripciones_externas': inscripciones_externas,
+            'inscripciones_internas': inscripciones_internas,
+            'total_inscripciones': inscripciones_externas.count() + inscripciones_internas.count(),
         }
         return render(request, 'inscripciones/mis_inscripciones.html', context)
     except Estudiante.DoesNotExist:
@@ -671,33 +715,18 @@ def registro_estudiante(request):
         form = EstudianteRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                # Guardar el usuario
-                user = form.save(commit=False)
+                # Guardar el usuario Y el estudiante usando el método save() del formulario
+                user = form.save(commit=True)  # ✅ Cambiar a commit=True para que se cree el Estudiante
+                
                 # Marcar como inactivo hasta que verifique el email
                 user.is_active = False
                 user.save()
                 
-                # Crear el perfil de estudiante
-                form.save_m2m() if hasattr(form, 'save_m2m') else None
-                
-                # Enviar email de verificación
-                email_sent = supabase_auth.send_verification_email(user, request)
-                
-                if email_sent:
-                    messages.success(
-                        request, 
-                        '✅ ¡Cuenta creada exitosamente! Por favor, revisa tu correo electrónico '
-                        'para verificar tu cuenta antes de iniciar sesión.'
-                    )
-                else:
-                    # Si falla el envío del email, activar la cuenta de todos modos
-                    user.is_active = True
-                    user.save()
-                    messages.warning(
-                        request,
-                        '⚠️ Cuenta creada pero no se pudo enviar el email de verificación. '
-                        'Puedes iniciar sesión directamente.'
-                    )
+                messages.success(
+                    request, 
+                    '✅ ¡Registro exitoso! Tu cuenta ha sido creada. '
+                    'Ahora puedes iniciar sesión con tu usuario y contraseña.'
+                )
                 
                 return redirect('login')
                 
@@ -727,7 +756,7 @@ def registro_estudiante(request):
 
 
 def registro_empresa(request):
-    """Registro de nuevas empresas con verificación de email"""
+    """Registro de nuevas empresas - Pendiente de aprobación del admin"""
     if request.method == 'POST':
         form = EmpresaRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
@@ -735,31 +764,18 @@ def registro_empresa(request):
                 # Guardar el usuario y empresa con documentos
                 user = form.save()
                 
-                # Marcar usuario como inactivo hasta que verifique el email
+                # NOTA: El usuario queda inactivo porque la empresa está pendiente de aprobación
+                # El admin debe aprobar la empresa para que el usuario pueda iniciar sesión
                 user.is_active = False
                 user.save()
                 
-                # Enviar email de verificación
-                email_sent = supabase_auth.send_verification_email(user, request)
-                
-                if email_sent:
-                    messages.success(
-                        request,
-                        'Registro enviado exitosamente. Tu solicitud ha sido recibida. '
-                        'Tu registro está PENDIENTE DE APROBACIÓN por el administrador. '
-                        'Hemos enviado un correo de confirmación a tu email. '
-                        'Una vez que el administrador apruebe tu cuenta, podrás iniciar sesión. '
-                        'Recibirás una notificación cuando tu cuenta sea aprobada.'
-                    )
-                else:
-                    # Si falla el envío del email, activar la cuenta de todos modos
-                    user.is_active = True
-                    user.save()
-                    messages.warning(
-                        request,
-                        'Empresa registrada pero no se pudo enviar el email de verificación. '
-                        'Tu registro está pendiente de aprobación por el administrador.'
-                    )
+                messages.success(
+                    request,
+                    'Registro enviado exitosamente. Tu solicitud ha sido recibida. '
+                    'Tu registro está PENDIENTE DE APROBACIÓN por el administrador. '
+                    'Una vez que el administrador apruebe tu cuenta, podrás iniciar sesión. '
+                    'Recibirás una notificación cuando tu cuenta sea aprobada.'
+                )
                 
                 return redirect('login')
                 
@@ -789,7 +805,7 @@ def registro_empresa(request):
 
 
 def registro_facultad(request):
-    """Registro de nuevas facultades con verificación de email"""
+    """Registro de nuevas facultades - Pendiente de aprobación del admin"""
     if request.method == 'POST':
         form = FacultadRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
@@ -797,31 +813,18 @@ def registro_facultad(request):
                 # Guardar el usuario y facultad con documentos
                 user = form.save()
                 
-                # Marcar usuario como inactivo hasta que verifique el email
+                # NOTA: El usuario queda inactivo porque la facultad está pendiente de aprobación
+                # El admin debe aprobar la facultad para que el usuario pueda iniciar sesión
                 user.is_active = False
                 user.save()
                 
-                # Enviar email de verificación
-                email_sent = supabase_auth.send_verification_email(user, request)
-                
-                if email_sent:
-                    messages.success(
-                        request,
-                        'Registro enviado exitosamente. Tu solicitud ha sido recibida. '
-                        'Tu registro está PENDIENTE DE APROBACIÓN por el administrador. '
-                        'Hemos enviado un correo de confirmación a tu email. '
-                        'Una vez que el administrador apruebe tu cuenta, podrás iniciar sesión. '
-                        'Recibirás una notificación cuando tu cuenta sea aprobada.'
-                    )
-                else:
-                    # Si falla el envío del email, activar la cuenta de todos modos
-                    user.is_active = True
-                    user.save()
-                    messages.warning(
-                        request,
-                        'Facultad registrada pero no se pudo enviar el email de verificación. '
-                        'Tu registro está pendiente de aprobación por el administrador.'
-                    )
+                messages.success(
+                    request,
+                    'Registro enviado exitosamente. Tu solicitud ha sido recibida. '
+                    'Tu registro está PENDIENTE DE APROBACIÓN por el administrador. '
+                    'Una vez que el administrador apruebe tu cuenta, podrás iniciar sesión. '
+                    'Recibirás una notificación cuando tu cuenta sea aprobada.'
+                )
                 
                 return redirect('login')
                 

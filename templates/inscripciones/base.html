@@ -1285,7 +1285,7 @@
                             <i class="bi bi-person-circle"></i>
                             <span class="navbar-user-name">
                                 {% if user.estudiante %}
-                                    {{ user.estudiante.nombres }} {{ user.estudiante.apellidos }}
+                                    {{ user.first_name }} {{ user.last_name }}
                                 {% elif user.empresa %}
                                     {{ user.empresa.nombre }}
                                 {% elif user.facultad %}

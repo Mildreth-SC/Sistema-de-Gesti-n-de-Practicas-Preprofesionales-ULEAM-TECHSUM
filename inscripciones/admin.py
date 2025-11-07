@@ -1,7 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import Carrera, Estudiante, Empresa, Practica, Inscripcion, DocumentoInscripcion, Facultad, PracticaInterna, InscripcionInterna, Calificacion
+from .models import (
+    Carrera, Estudiante, Empresa, Practica, Inscripcion, DocumentoInscripcion, 
+    Facultad, PracticaInterna, InscripcionInterna, Calificacion, DocumentoInscripcionInterna
+)
 
 
 # Personalización del sitio admin
@@ -39,8 +42,9 @@ class EmpresaAdmin(admin.ModelAdmin):
     list_filter = ['sector', 'estado_aprobacion', 'activa']
     search_fields = ['nombre', 'ruc', 'contacto_responsable']
     ordering = ['nombre']
-    readonly_fields = ['fecha_registro']
+    readonly_fields = ['fecha_registro', 'fecha_aprobacion', 'aprobado_por']
     list_per_page = 20
+    actions = ['aprobar_empresas', 'rechazar_empresas', 'activar_empresas', 'desactivar_empresas']
     fieldsets = (
         ('Información Básica', {
             'fields': ('nombre', 'ruc', 'sector', 'logo')
@@ -48,8 +52,12 @@ class EmpresaAdmin(admin.ModelAdmin):
         ('Contacto', {
             'fields': ('contacto_responsable', 'email', 'telefono', 'direccion')
         }),
+        ('Documentos Legales', {
+            'fields': ('documento_constitucion', 'documento_ruc', 'documento_representante'),
+            'classes': ('collapse',)
+        }),
         ('Estado y Aprobación', {
-            'fields': ('estado_aprobacion', 'observaciones_aprobacion', 'activa', 'descripcion', 'fecha_registro'),
+            'fields': ('estado_aprobacion', 'observaciones_aprobacion', 'fecha_aprobacion', 'aprobado_por', 'activa', 'descripcion', 'fecha_registro'),
             'classes': ('wide',)
         }),
         ('Usuario del Sistema', {
@@ -57,6 +65,52 @@ class EmpresaAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+    
+    def aprobar_empresas(self, request, queryset):
+        from django.utils import timezone
+        count = 0
+        for empresa in queryset:
+            if empresa.estado_aprobacion != 'aprobada':
+                empresa.estado_aprobacion = 'aprobada'
+                empresa.fecha_aprobacion = timezone.now()
+                empresa.aprobado_por = request.user
+                empresa.activa = True
+                # Activar el usuario asociado
+                if empresa.user:
+                    empresa.user.is_active = True
+                    empresa.user.save()
+                empresa.save()
+                count += 1
+        self.message_user(request, f"✅ {count} empresa(s) aprobada(s) exitosamente. Los usuarios ahora pueden iniciar sesión.")
+    aprobar_empresas.short_description = "✅ Aprobar empresas seleccionadas"
+    
+    def rechazar_empresas(self, request, queryset):
+        from django.utils import timezone
+        count = 0
+        for empresa in queryset:
+            if empresa.estado_aprobacion != 'rechazada':
+                empresa.estado_aprobacion = 'rechazada'
+                empresa.fecha_aprobacion = timezone.now()
+                empresa.aprobado_por = request.user
+                empresa.activa = False
+                # Desactivar el usuario asociado
+                if empresa.user:
+                    empresa.user.is_active = False
+                    empresa.user.save()
+                empresa.save()
+                count += 1
+        self.message_user(request, f"❌ {count} empresa(s) rechazada(s). Los usuarios no podrán iniciar sesión.")
+    rechazar_empresas.short_description = "❌ Rechazar empresas seleccionadas"
+    
+    def activar_empresas(self, request, queryset):
+        queryset.update(activa=True)
+        self.message_user(request, f"{queryset.count()} empresa(s) activada(s).")
+    activar_empresas.short_description = "Activar empresas seleccionadas"
+    
+    def desactivar_empresas(self, request, queryset):
+        queryset.update(activa=False)
+        self.message_user(request, f"{queryset.count()} empresa(s) desactivada(s).")
+    desactivar_empresas.short_description = "Desactivar empresas seleccionadas"
 
 
 @admin.register(Practica)
@@ -122,8 +176,9 @@ class FacultadAdmin(admin.ModelAdmin):
     list_filter = ['estado_aprobacion', 'activa']
     search_fields = ['nombre', 'codigo', 'decano', 'contacto_responsable']
     ordering = ['nombre']
-    readonly_fields = ['fecha_registro']
+    readonly_fields = ['fecha_registro', 'fecha_aprobacion', 'aprobado_por']
     list_per_page = 20
+    actions = ['aprobar_facultades', 'rechazar_facultades', 'activar_facultades', 'desactivar_facultades']
     fieldsets = (
         ('Información Básica', {
             'fields': ('nombre', 'codigo', 'decano', 'logo')
@@ -131,8 +186,12 @@ class FacultadAdmin(admin.ModelAdmin):
         ('Contacto', {
             'fields': ('contacto_responsable', 'email', 'telefono', 'direccion')
         }),
+        ('Documentos Legales', {
+            'fields': ('documento_autorizacion', 'documento_representante', 'documento_resolucion'),
+            'classes': ('collapse',)
+        }),
         ('Estado y Aprobación', {
-            'fields': ('estado_aprobacion', 'observaciones_aprobacion', 'activa', 'descripcion', 'fecha_registro'),
+            'fields': ('estado_aprobacion', 'observaciones_aprobacion', 'fecha_aprobacion', 'aprobado_por', 'activa', 'descripcion', 'fecha_registro'),
             'classes': ('wide',)
         }),
         ('Usuario del Sistema', {
@@ -140,6 +199,52 @@ class FacultadAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+    
+    def aprobar_facultades(self, request, queryset):
+        from django.utils import timezone
+        count = 0
+        for facultad in queryset:
+            if facultad.estado_aprobacion != 'aprobada':
+                facultad.estado_aprobacion = 'aprobada'
+                facultad.fecha_aprobacion = timezone.now()
+                facultad.aprobado_por = request.user
+                facultad.activa = True
+                # Activar el usuario asociado
+                if facultad.user:
+                    facultad.user.is_active = True
+                    facultad.user.save()
+                facultad.save()
+                count += 1
+        self.message_user(request, f"✅ {count} facultad(es) aprobada(s) exitosamente. Los usuarios ahora pueden iniciar sesión.")
+    aprobar_facultades.short_description = "✅ Aprobar facultades seleccionadas"
+    
+    def rechazar_facultades(self, request, queryset):
+        from django.utils import timezone
+        count = 0
+        for facultad in queryset:
+            if facultad.estado_aprobacion != 'rechazada':
+                facultad.estado_aprobacion = 'rechazada'
+                facultad.fecha_aprobacion = timezone.now()
+                facultad.aprobado_por = request.user
+                facultad.activa = False
+                # Desactivar el usuario asociado
+                if facultad.user:
+                    facultad.user.is_active = False
+                    facultad.user.save()
+                facultad.save()
+                count += 1
+        self.message_user(request, f"❌ {count} facultad(es) rechazada(s). Los usuarios no podrán iniciar sesión.")
+    rechazar_facultades.short_description = "❌ Rechazar facultades seleccionadas"
+    
+    def activar_facultades(self, request, queryset):
+        queryset.update(activa=True)
+        self.message_user(request, f"{queryset.count()} facultad(es) activada(s).")
+    activar_facultades.short_description = "Activar facultades seleccionadas"
+    
+    def desactivar_facultades(self, request, queryset):
+        queryset.update(activa=False)
+        self.message_user(request, f"{queryset.count()} facultad(es) desactivada(s).")
+    desactivar_facultades.short_description = "Desactivar facultades seleccionadas"
 
 
 @admin.register(PracticaInterna)
@@ -205,3 +310,18 @@ class CalificacionAdmin(admin.ModelAdmin):
             return f"{obj.inscripcion_interna.practica_interna.titulo} ({obj.inscripcion_interna.practica_interna.facultad.nombre})"
         return "N/A"
     get_practica.short_description = "Práctica"
+
+
+@admin.register(DocumentoInscripcionInterna)
+class DocumentoInscripcionInternaAdmin(admin.ModelAdmin):
+    list_display = ['nombre', 'get_estudiante', 'tipo', 'archivo', 'fecha_subida']
+    list_filter = ['tipo', 'fecha_subida']
+    search_fields = ['nombre', 'inscripcion_interna__estudiante__user__first_name', 'inscripcion_interna__estudiante__user__last_name']
+    ordering = ['-fecha_subida']
+    readonly_fields = ['fecha_subida']
+    date_hierarchy = 'fecha_subida'
+    list_per_page = 20
+    
+    def get_estudiante(self, obj):
+        return obj.inscripcion_interna.estudiante.user.get_full_name()
+    get_estudiante.short_description = "Estudiante"

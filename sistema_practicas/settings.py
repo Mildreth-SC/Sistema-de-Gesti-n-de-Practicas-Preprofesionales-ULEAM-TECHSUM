@@ -81,7 +81,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'inscripciones.middleware.SupabaseAuthMiddleware',  # ← Middleware de Supabase Auth
+    # 'inscripciones.middleware.SupabaseAuthMiddleware',  # ← Comentado: Usamos solo Django Auth
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
