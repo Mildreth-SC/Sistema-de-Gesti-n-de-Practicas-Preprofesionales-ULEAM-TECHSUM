@@ -209,7 +209,7 @@ def registro_estudiante(request):
                         )
                         
                         tipo = "egresado" if form.cleaned_data.get('tipo_usuario') == 'egresado' else "estudiante"
-                        logger.info(f"✅ {tipo.capitalize()} registrado: {email}")
+                        logger.info(f" {tipo.capitalize()} registrado: {email}")
                         
                         messages.success(
                             request,
@@ -280,7 +280,7 @@ def registro_empresa(request):
                         user.is_active = False  # Inactivo hasta aprobación del admin
                         user.save()
                         
-                        logger.info(f"✅ Empresa registrada (pendiente de aprobación): {email}")
+                        logger.info(f" Empresa registrada (pendiente de aprobación): {email}")
                         
                         messages.success(
                             request,
@@ -357,7 +357,7 @@ def registro_facultad(request):
                         user.is_active = False  # Inactivo hasta aprobación del admin
                         user.save()
                         
-                        logger.info(f"✅ Facultad registrada (pendiente de aprobación): {email}")
+                        logger.info(f" Facultad registrada (pendiente de aprobación): {email}")
                         
                         messages.success(
                             request,
@@ -373,7 +373,7 @@ def registro_facultad(request):
                         )
                         
             except Exception as e:
-                logger.error(f"❌ Error al registrar facultad: {e}")
+                logger.error(f" Error al registrar facultad: {e}")
                 messages.error(
                     request, 
                     f'Error al procesar el registro: {str(e)}'
